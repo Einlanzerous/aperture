@@ -1,0 +1,29 @@
+package checker
+
+import "time"
+
+// Status represents the health state of a monitored service.
+type Status string
+
+const (
+	StatusHealthy   Status = "healthy"
+	StatusDegraded  Status = "degraded"
+	StatusUnhealthy Status = "unhealthy"
+	StatusUnknown   Status = "unknown"
+)
+
+// ServiceStatus holds the latest check result for a single service.
+type ServiceStatus struct {
+	Name         string    `json:"name"`
+	Type         string    `json:"type"`
+	URL          string    `json:"url,omitempty"`
+	Container    string    `json:"container,omitempty"`
+	Status       Status    `json:"status"`
+	StatusCode   int       `json:"statusCode,omitempty"`
+	ResponseTime int64     `json:"responseTime,omitempty"` // milliseconds
+	Message      string    `json:"message,omitempty"`
+	CheckedAt    time.Time `json:"checkedAt"`
+	Icon         string    `json:"icon,omitempty"`
+	Category     string    `json:"category,omitempty"`
+	Size         string    `json:"size,omitempty"`
+}

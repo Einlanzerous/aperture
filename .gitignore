@@ -1,0 +1,25 @@
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editors ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── User config (personal service list — not for committing to forks) ────────
+config.yaml
+
+# ── Build output ─────────────────────────────────────────────────────────────
+dist/
+
+# ── Environment files ────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Docker override ──────────────────────────────────────────────────────────
+docker-compose.override.yaml

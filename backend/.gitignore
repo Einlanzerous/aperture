@@ -1,0 +1,12 @@
+# Compiled binaries
+aperture
+aperture.exe
+
+# Test output
+*.out
+coverage.html
+coverage.txt
+
+# go workspace (if used locally)
+go.work
+go.work.sum

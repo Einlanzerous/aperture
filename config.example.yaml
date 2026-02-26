@@ -1,0 +1,148 @@
+# ─── Aperture — example configuration ────────────────────────────────────────
+#
+# Copy this file to config.yaml and fill in your own services.
+#
+#   cp config.example.yaml config.yaml
+#
+# Every option is documented inline below.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Label shown in the dashboard header.
+title: "My Dashboard"
+
+# Port the backend API server listens on.
+port: 8888
+
+# How often (in seconds) the backend re-runs all health checks.
+check_interval: 30
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+#
+# Each entry is either an HTTP check or a Docker socket check.
+#
+# Shared fields:
+#   name      Display name shown on the widget card.
+#   type      "http" or "docker"
+#   category  Optional group label (shown on hover).
+#   size      Grid column span — s (1/3), m (2/3), l (full-width).
+#             Defaults to s if omitted.
+#
+# HTTP-specific fields:
+#   url       Full URL to GET. A 2xx response → healthy, 3xx → degraded,
+#             anything else or a timeout → unhealthy.
+#
+# Docker-specific fields:
+#   container Name or ID of the container to inspect via /var/run/docker.sock.
+#             Running + healthy HEALTHCHECK → healthy
+#             Running, no HEALTHCHECK      → healthy (noted in message)
+#             Running + unhealthy          → unhealthy
+#             Stopped / not found          → unhealthy / unknown
+
+services:
+
+  # ── Management ───────────────────────────────────────────────────────────────
+  - name: "Portainer"
+    type: http
+    url: "http://localhost:9000"
+    category: "Management"
+    size: s
+
+  - name: "Nginx Proxy Manager"
+    type: http
+    url: "http://localhost:81"   # admin UI port
+    category: "Management"
+    size: s
+
+  # ── Media ─────────────────────────────────────────────────────────────────────
+  - name: "Jellyfin"
+    type: http
+    url: "http://localhost:8096"
+    category: "Media"
+    size: s
+
+  - name: "Plex"
+    type: http
+    url: "http://localhost:32400/web"
+    category: "Media"
+    size: s
+
+  # ── Monitoring ────────────────────────────────────────────────────────────────
+  - name: "Uptime Kuma"
+    type: http
+    url: "http://localhost:3001"
+    category: "Monitoring"
+    size: s
+
+  - name: "Netdata"
+    type: http
+    url: "http://localhost:19999"
+    category: "Monitoring"
+    size: s
+
+  # ── Storage ───────────────────────────────────────────────────────────────────
+  - name: "Nextcloud"
+    type: http
+    url: "http://localhost:8080"
+    category: "Storage"
+    size: m   # ← 2/3 width example
+
+  # ── Automation ────────────────────────────────────────────────────────────────
+  - name: "Home Assistant"
+    type: http
+    url: "http://localhost:8123"
+    category: "Automation"
+    size: s
+
+  - name: "n8n"
+    type: http
+    url: "http://localhost:5678"
+    category: "Automation"
+    size: s
+
+  # ── Security ──────────────────────────────────────────────────────────────────
+  - name: "Vaultwarden"
+    type: http
+    url: "http://localhost:8280"
+    category: "Security"
+    size: s
+
+  # ── Dev ───────────────────────────────────────────────────────────────────────
+  - name: "Gitea"
+    type: http
+    url: "http://localhost:3030"
+    category: "Dev"
+    size: s
+
+  # ── Infrastructure — Docker socket checks ─────────────────────────────────────
+  # These services have no directly accessible HTTP port, so we check their
+  # container state instead. The backend must have read access to the Docker socket
+  # (see docker-compose.yaml for the volume mount).
+  - name: "Traefik"
+    type: docker
+    container: "traefik"        # must match the container name, not the image name
+    category: "Infra"
+    size: s
+
+  - name: "Watchtower"
+    type: docker
+    container: "watchtower"
+    category: "Infra"
+    size: s
+
+  - name: "PostgreSQL"
+    type: docker
+    container: "postgres"
+    category: "Database"
+    size: s
+
+# ─── Ollama widget ────────────────────────────────────────────────────────────
+# Shows a live list of models pulled to your Ollama instance.
+# Leave url blank (or remove this section entirely) to hide the widget.
+ollama:
+  url: "http://localhost:11434"
+
+# ─── System resources widget ──────────────────────────────────────────────────
+# Displays host CPU usage, RAM, and load averages. Polls every 5 seconds.
+# Load average is Linux/macOS only; the widget degrades gracefully on Windows.
+system:
+  enabled: true

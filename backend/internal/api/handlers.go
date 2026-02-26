@@ -1,0 +1,95 @@
+package api
+
+import (
+	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/aperture-dashboard/aperture/internal/checker"
+	"github.com/aperture-dashboard/aperture/internal/config"
+	"github.com/aperture-dashboard/aperture/internal/system"
+)
+
+type Handler struct {
+	worker     *checker.Worker
+	sysMonitor *system.Monitor
+	cfg        *config.Config
+	httpClient *http.Client
+}
+
+func NewHandler(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config) *Handler {
+	return &Handler{
+		worker:     worker,
+		sysMonitor: sysMonitor,
+		cfg:        cfg,
+		httpClient: &http.Client{Timeout: 15 * time.Second},
+	}
+}
+
+func writeJSON(w http.ResponseWriter, code int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Printf("[api] encode error: %v", err)
+	}
+}
+
+// Health is a simple liveness probe for the backend itself.
+func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// GetConfig returns dashboard-level configuration for the frontend.
+func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"title":         h.cfg.Title,
+		"checkInterval": h.cfg.CheckInterval,
+		"ollamaEnabled": h.cfg.Ollama.URL != "",
+		"systemEnabled": h.cfg.System.Enabled,
+	})
+}
+
+// GetServices returns the latest health-check result for all configured services.
+func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"services":  h.worker.GetStatuses(),
+		"updatedAt": time.Now(),
+	})
+}
+
+// GetSystemResources samples and returns the host's CPU / memory / load stats.
+func (h *Handler) GetSystemResources(w http.ResponseWriter, r *http.Request) {
+	res, err := h.sysMonitor.Collect()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+// GetOllamaModels proxies the Ollama /api/tags endpoint so the frontend avoids CORS issues.
+func (h *Handler) GetOllamaModels(w http.ResponseWriter, r *http.Request) {
+	if h.cfg.Ollama.URL == "" {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "Ollama URL not configured"})
+		return
+	}
+
+	resp, err := h.httpClient.Get(h.cfg.Ollama.URL + "/api/tags")
+	if err != nil {
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "cannot reach Ollama: " + err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "read error: " + err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	_, _ = w.Write(body)
+}
