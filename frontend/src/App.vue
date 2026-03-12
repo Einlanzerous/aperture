@@ -33,15 +33,7 @@ function fmtTime(d: Date | null): string {
     <header class="sticky top-0 z-10 border-b border-gray-800 bg-gray-950/80 backdrop-blur">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         <div class="flex items-center gap-2.5">
-          <svg class="h-5 w-5 text-indigo-400" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="4"/>
-            <line x1="12" y1="2"  x2="12" y2="6"/>
-            <line x1="12" y1="18" x2="12" y2="22"/>
-            <line x1="2"  y1="12" x2="6"  y2="12"/>
-            <line x1="18" y1="12" x2="22" y2="12"/>
-          </svg>
+          <img src="/aperture_logo.png" alt="Aperture" class="h-6 w-6" />
           <span class="text-base font-semibold tracking-tight text-gray-100">
             {{ config.title }}
           </span>
