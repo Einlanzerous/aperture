@@ -1,6 +1,10 @@
 package checker
 
-import "time"
+import (
+	"time"
+
+	"github.com/aperture-dashboard/aperture/internal/config"
+)
 
 // Status represents the health state of a monitored service.
 type Status string
@@ -11,6 +15,8 @@ const (
 	StatusUnhealthy Status = "unhealthy"
 	StatusUnknown   Status = "unknown"
 )
+
+const defaultCheckTimeout = 15 * time.Second
 
 // ServiceStatus holds the latest check result for a single service.
 type ServiceStatus struct {
@@ -25,5 +31,21 @@ type ServiceStatus struct {
 	CheckedAt    time.Time `json:"checkedAt"`
 	Icon         string    `json:"icon,omitempty"`
 	Category     string    `json:"category,omitempty"`
+	Href         string    `json:"href,omitempty"`
 	Size         string    `json:"size,omitempty"`
+}
+
+// newServiceStatus creates a ServiceStatus pre-populated from config fields.
+func newServiceStatus(svc config.ServiceConfig) *ServiceStatus {
+	return &ServiceStatus{
+		Name:      svc.Name,
+		Type:      string(svc.Type),
+		URL:       svc.URL,
+		Container: svc.Container,
+		Icon:      svc.Icon,
+		Category:  svc.Category,
+		Href:      svc.Href,
+		Size:      svc.Size,
+		CheckedAt: time.Now(),
+	}
 }

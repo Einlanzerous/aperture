@@ -1,6 +1,12 @@
-# Aperture
+<p align="center">
+  <img src="frontend/public/aperture_logo.png" alt="Aperture" width="200" />
+</p>
 
-A self-hosted, open-source server dashboard. Monitor the health of your services, Docker containers, local AI models, and host resources — all from a single clean UI.
+<h1 align="center">Aperture</h1>
+
+<p align="center">
+  A self-hosted, open-source server dashboard. Monitor the health of your services, Docker containers, local AI models, and host resources — all from a single clean UI.
+</p>
 
 > Inspired by Homer, built for more.
 
@@ -37,12 +43,12 @@ The dashboard is available at `http://localhost:4000`. The backend API runs on p
 ### Manual
 
 ```bash
-# Backend (requires Go 1.22+)
+# Backend (requires Go 1.24+)
 cd backend
 go mod download
 go run ./cmd/server ../config.yaml
 
-# Frontend (separate terminal, requires Node 20+)
+# Frontend (separate terminal, requires Node 24+)
 cd frontend
 npm install
 npm run dev

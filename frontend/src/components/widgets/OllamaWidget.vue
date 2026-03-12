@@ -1,36 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import type { OllamaModel } from '@/types'
+import { ref, computed } from 'vue'
+import { useOllama } from '@/composables/useOllama'
+import { fmtBytes } from '@/utils/format'
 
-// ─── State ────────────────────────────────────────────────────────────────────
+const MAX_VISIBLE_MODELS = 5
 
-const models  = ref<OllamaModel[]>([])
-const loading = ref(true)
-const error   = ref<string | null>(null)
-
-let timerId: ReturnType<typeof setInterval> | null = null
-
-async function fetchModels() {
-  try {
-    const res = await fetch('/api/ollama/models')
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    models.value = data.models ?? []
-    error.value  = null
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Unknown error'
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchModels()
-  timerId = setInterval(fetchModels, 60_000)
-})
-onUnmounted(() => { if (timerId !== null) clearInterval(timerId) })
-
-// ─── Derived ─────────────────────────────────────────────────────────────────
+const { models, loading, error } = useOllama(60_000)
 
 const status = computed(() => {
   if (loading.value) return 'loading'
@@ -38,26 +13,18 @@ const status = computed(() => {
   return 'ok'
 })
 
-/** Show first 5; user can toggle to see all. */
-const expanded   = ref(false)
-const visible    = computed(() => expanded.value ? models.value : models.value.slice(0, 5))
-const hasMore    = computed(() => models.value.length > 5)
-const hiddenCount = computed(() => models.value.length - 5)
-
-function fmtSize(bytes: number): string {
-  const gb = bytes / 1073741824
-  return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / 1048576).toFixed(0)} MB`
-}
-
+const expanded    = ref(false)
+const visible     = computed(() => expanded.value ? models.value : models.value.slice(0, MAX_VISIBLE_MODELS))
+const hasMore     = computed(() => models.value.length > MAX_VISIBLE_MODELS)
+const hiddenCount = computed(() => models.value.length - MAX_VISIBLE_MODELS)
 </script>
 
 <template>
-  <article class="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-5 shadow-md">
+  <article class="widget-card gap-4 p-4">
 
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <!-- Brain/AI icon -->
         <svg class="h-4 w-4 text-violet-400" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.75" aria-hidden="true">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
@@ -68,7 +35,6 @@ function fmtSize(bytes: number): string {
         <h2 class="text-sm font-semibold text-gray-100">Ollama</h2>
       </div>
 
-      <!-- Connection status -->
       <span
         class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
         :class="{
@@ -114,7 +80,6 @@ function fmtSize(bytes: number): string {
         class="flex items-center justify-between rounded-lg bg-gray-800/60 px-3 py-2
                text-xs transition-colors hover:bg-gray-800"
       >
-        <!-- Name + family -->
         <div class="flex items-center gap-2 min-w-0">
           <span class="truncate font-medium text-gray-200">{{ model.name }}</span>
           <span
@@ -126,12 +91,11 @@ function fmtSize(bytes: number): string {
           </span>
         </div>
 
-        <!-- Right: quantisation + size -->
         <div class="ml-4 flex shrink-0 items-center gap-2 text-gray-500">
           <span v-if="model.details?.quantization_level" class="tabular-nums">
             {{ model.details.quantization_level }}
           </span>
-          <span class="tabular-nums text-gray-400">{{ fmtSize(model.size) }}</span>
+          <span class="tabular-nums text-gray-400">{{ fmtBytes(model.size) }}</span>
         </div>
       </li>
     </ul>

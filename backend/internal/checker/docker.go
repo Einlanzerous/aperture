@@ -4,20 +4,50 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"time"
 )
 
-// dockerClient talks to the Docker daemon via the Unix socket.
-// No third-party SDK required — the Docker Engine API is plain HTTP.
-var dockerTransport = &http.Client{
-	Transport: &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			return (&net.Dialer{Timeout: 5 * time.Second}).DialContext(ctx, "unix", "/var/run/docker.sock")
+const (
+	defaultDockerSocket      = "/var/run/docker.sock"
+	defaultDockerDialTimeout = 5 * time.Second
+	defaultDockerTimeout     = 10 * time.Second
+	maxDockerResponseBytes   = 10 << 20 // 10 MB
+
+	dockerHealthHealthy   = "healthy"
+	dockerHealthUnhealthy = "unhealthy"
+	dockerHealthStarting  = "starting"
+)
+
+// DockerChecker checks a container's state via the Docker Engine API over a Unix socket.
+type DockerChecker struct {
+	container string
+	client    *http.Client
+}
+
+func NewDockerChecker(container string, socketPath string) *DockerChecker {
+	if socketPath == "" {
+		socketPath = defaultDockerSocket
+	}
+	return &DockerChecker{
+		container: container,
+		client: &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+					return (&net.Dialer{Timeout: defaultDockerDialTimeout}).DialContext(ctx, "unix", socketPath)
+				},
+			},
+			Timeout: defaultDockerTimeout,
 		},
-	},
-	Timeout: 10 * time.Second,
+	}
+}
+
+// Check returns (status, statusCode=0, responseTime=0, message) since Docker checks have no HTTP status code or response time.
+func (c *DockerChecker) Check(ctx context.Context) (Status, int, int64, string) {
+	status, msg := c.inspect(ctx)
+	return status, 0, 0, msg
 }
 
 type dockerInspect struct {
@@ -30,16 +60,15 @@ type dockerInspect struct {
 	} `json:"State"`
 }
 
-// checkDocker inspects a container by name or ID and returns its health status.
-func checkDocker(ctx context.Context, containerName string) (Status, string) {
-	url := fmt.Sprintf("http://localhost/containers/%s/json", containerName)
+func (c *DockerChecker) inspect(ctx context.Context) (Status, string) {
+	url := fmt.Sprintf("http://localhost/containers/%s/json", c.container)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return StatusUnknown, err.Error()
 	}
 
-	resp, err := dockerTransport.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return StatusUnhealthy, fmt.Sprintf("docker socket: %v", err)
 	}
@@ -55,7 +84,7 @@ func checkDocker(ctx context.Context, containerName string) (Status, string) {
 	}
 
 	var inspect dockerInspect
-	if err := json.NewDecoder(resp.Body).Decode(&inspect); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxDockerResponseBytes)).Decode(&inspect); err != nil {
 		return StatusUnknown, fmt.Sprintf("parse error: %v", err)
 	}
 
@@ -65,15 +94,14 @@ func checkDocker(ctx context.Context, containerName string) (Status, string) {
 
 	if h := inspect.State.Health; h != nil {
 		switch h.Status {
-		case "healthy":
+		case dockerHealthHealthy:
 			return StatusHealthy, ""
-		case "unhealthy":
+		case dockerHealthUnhealthy:
 			return StatusUnhealthy, "healthcheck failing"
-		case "starting":
+		case dockerHealthStarting:
 			return StatusDegraded, "healthcheck starting"
 		}
 	}
 
-	// Container is running but has no HEALTHCHECK directive.
 	return StatusHealthy, "running (no healthcheck)"
 }

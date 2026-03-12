@@ -1,13 +1,13 @@
-FROM golang:1.22-alpine AS builder
-RUN apk add --no-cache git
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
-COPY go.mod ./
-COPY go.sum* ./
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 COPY . .
-RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o aperture ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o aperture ./cmd/server
 
-FROM scratch
+FROM alpine:3.21
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=builder /app/aperture /app/aperture
-EXPOSE 8080
+EXPOSE 8888
 ENTRYPOINT ["/app/aperture"]

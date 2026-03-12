@@ -1,16 +1,8 @@
 <script setup lang="ts">
-defineProps<{
-  // Callers render their widgets as named slots or default slot children.
-  // The grid only controls the outer layout.
-}>()
+// Grid layout — no props needed. Widgets are rendered via the default slot.
 </script>
 
 <template>
-  <!--
-    3-column grid. On mobile everything stacks to full width.
-    Widgets declare their own size via col-span classes applied by
-    the parent (App.vue) using the sizeClass helper below.
-  -->
   <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <slot />
   </div>
@@ -19,7 +11,6 @@ defineProps<{
 <script lang="ts">
 import type { WidgetSize } from '@/types'
 
-// Exported so App.vue can map WidgetSize → Tailwind class without coupling.
 export const widgetSizeClass = (size: WidgetSize = 's') =>
   ({
     s: 'col-span-1',

@@ -2,17 +2,25 @@ package checker
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/aperture-dashboard/aperture/internal/config"
 )
 
+// serviceEntry pairs a config-derived identity with its runtime checker.
+type serviceEntry struct {
+	config  config.ServiceConfig
+	checker Checker
+}
+
 // Worker runs health checks for all configured services on a fixed interval.
 // Results are stored in a thread-safe map and served to the API layer.
 type Worker struct {
-	cfg      *config.Config
+	entries  []serviceEntry
+	interval time.Duration
 	statuses map[string]*ServiceStatus
 	mu       sync.RWMutex
 	stopCh   chan struct{}
@@ -20,9 +28,24 @@ type Worker struct {
 }
 
 func NewWorker(cfg *config.Config) *Worker {
+	entries := make([]serviceEntry, 0, len(cfg.Services))
+	for _, svc := range cfg.Services {
+		var c Checker
+		switch svc.Type {
+		case config.ServiceTypeHTTP:
+			c = NewHTTPChecker(svc.URL)
+		case config.ServiceTypeDocker:
+			c = NewDockerChecker(svc.Container, cfg.DockerSocket)
+		default:
+			continue
+		}
+		entries = append(entries, serviceEntry{config: svc, checker: c})
+	}
+
 	return &Worker{
-		cfg:      cfg,
-		statuses: make(map[string]*ServiceStatus, len(cfg.Services)),
+		entries:  entries,
+		interval: time.Duration(cfg.CheckInterval) * time.Second,
+		statuses: make(map[string]*ServiceStatus, len(entries)),
 		stopCh:   make(chan struct{}),
 	}
 }
@@ -34,7 +57,7 @@ func (w *Worker) Start() {
 	w.wg.Add(1)
 	go func() {
 		defer w.wg.Done()
-		ticker := time.NewTicker(time.Duration(w.cfg.CheckInterval) * time.Second)
+		ticker := time.NewTicker(w.interval)
 		defer ticker.Stop()
 
 		for {
@@ -49,12 +72,24 @@ func (w *Worker) Start() {
 }
 
 // Stop signals the background goroutine to exit and waits for it to finish.
-func (w *Worker) Stop() {
+// The provided context can enforce a deadline on the wait.
+func (w *Worker) Stop(ctx context.Context) {
 	close(w.stopCh)
-	w.wg.Wait()
+
+	done := make(chan struct{})
+	go func() {
+		w.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		slog.Warn("worker stop timed out", "error", ctx.Err())
+	}
 }
 
-// GetStatuses returns a snapshot of all current service statuses.
+// GetStatuses returns a snapshot of all current service statuses, sorted by name.
 func (w *Worker) GetStatuses() []*ServiceStatus {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -64,23 +99,23 @@ func (w *Worker) GetStatuses() []*ServiceStatus {
 		cp := *s
 		out = append(out, &cp)
 	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
 }
 
 // runChecks fans out one goroutine per service, collects results, and stores them.
 func (w *Worker) runChecks() {
-	results := make(chan *ServiceStatus, len(w.cfg.Services))
+	results := make(chan *ServiceStatus, len(w.entries))
 	var wg sync.WaitGroup
 
-	for _, svc := range w.cfg.Services {
+	for _, e := range w.entries {
 		wg.Add(1)
-		go func(svc config.ServiceConfig) {
+		go func(e serviceEntry) {
 			defer wg.Done()
-			results <- w.checkService(svc)
-		}(svc)
+			results <- w.checkService(e)
+		}(e)
 	}
 
-	// Close the channel once all goroutines finish so we can range over it.
 	go func() {
 		wg.Wait()
 		close(results)
@@ -93,33 +128,18 @@ func (w *Worker) runChecks() {
 	}
 }
 
-func (w *Worker) checkService(svc config.ServiceConfig) *ServiceStatus {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (w *Worker) checkService(e serviceEntry) *ServiceStatus {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultCheckTimeout)
 	defer cancel()
 
-	s := &ServiceStatus{
-		Name:      svc.Name,
-		Type:      string(svc.Type),
-		URL:       svc.URL,
-		Container: svc.Container,
-		Icon:      svc.Icon,
-		Category:  svc.Category,
-		Size:      svc.Size,
-		CheckedAt: time.Now(),
-	}
+	s := newServiceStatus(e.config)
+	s.Status, s.StatusCode, s.ResponseTime, s.Message = e.checker.Check(ctx)
 
-	switch svc.Type {
-	case config.ServiceTypeHTTP:
-		s.Status, s.StatusCode, s.ResponseTime, s.Message = checkHTTP(ctx, svc.URL)
-
-	case config.ServiceTypeDocker:
-		s.Status, s.Message = checkDocker(ctx, svc.Container)
-
-	default:
-		s.Status = StatusUnknown
-		s.Message = "unsupported service type"
-	}
-
-	log.Printf("[checker] %-24s %-8s → %s", svc.Name, svc.Type, s.Status)
+	slog.Info("check complete",
+		"component", "checker",
+		"service", e.config.Name,
+		"type", e.config.Type,
+		"status", s.Status,
+	)
 	return s
 }

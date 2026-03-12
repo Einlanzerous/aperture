@@ -18,6 +18,7 @@ export interface ServiceStatusData {
   checkedAt:    string    // ISO-8601
   icon?:        string
   category?:    string
+  href?:        string
   size?:        WidgetSize
 }
 

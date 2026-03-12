@@ -1,40 +1,35 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useResources } from '@/composables/useResources'
+import { fmtBytes } from '@/utils/format'
 
-const { resources, loading, error } = useResources(5_000)
+const WARNING_THRESHOLD  = 60
+const CRITICAL_THRESHOLD = 85
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+const { data: resources, loading, error } = useResources(5_000)
 
 function pct(n: number): string {
   return n.toFixed(1) + '%'
 }
 
-function fmtBytes(bytes: number): string {
-  const gb = bytes / 1073741824
-  return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / 1048576).toFixed(0)} MB`
-}
-
-/** Return a Tailwind colour class based on usage percentage. */
 function barColor(percent: number): string {
-  if (percent < 60)  return 'bg-emerald-400'
-  if (percent < 85)  return 'bg-amber-400'
+  if (percent < WARNING_THRESHOLD)  return 'bg-emerald-400'
+  if (percent < CRITICAL_THRESHOLD) return 'bg-amber-400'
   return 'bg-red-400'
 }
 
-const cpuColor  = computed(() => resources.value ? barColor(resources.value.cpu.percent)    : 'bg-gray-600')
-const ramColor  = computed(() => resources.value ? barColor(resources.value.memory.percent) : 'bg-gray-600')
-const cpuWidth  = computed(() => `${Math.min(resources.value?.cpu.percent    ?? 0, 100)}%`)
-const ramWidth  = computed(() => `${Math.min(resources.value?.memory.percent ?? 0, 100)}%`)
+const cpuColor = computed(() => resources.value ? barColor(resources.value.cpu.percent)    : 'bg-gray-600')
+const ramColor = computed(() => resources.value ? barColor(resources.value.memory.percent) : 'bg-gray-600')
+const cpuWidth = computed(() => `${Math.min(resources.value?.cpu.percent    ?? 0, 100)}%`)
+const ramWidth = computed(() => `${Math.min(resources.value?.memory.percent ?? 0, 100)}%`)
 </script>
 
 <template>
-  <article class="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-5 shadow-md">
+  <article class="widget-card gap-4 p-4">
 
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <!-- Server icon -->
         <svg class="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.75" aria-hidden="true">
           <rect x="2" y="3" width="20" height="6" rx="1"/>

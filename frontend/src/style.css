@@ -1,6 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-gray-950: #0a0a0f;
+}
+
+@layer components {
+  .widget-card {
+    @apply flex flex-col rounded-xl border border-gray-800 bg-gray-900 shadow-md;
+  }
+}
 
 @layer base {
   ::-webkit-scrollbar        { @apply w-1.5 h-1.5; }
