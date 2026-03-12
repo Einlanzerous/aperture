@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Einlanzerous/aperture/compare/v1.1.1...v1.2.0) (2026-03-12)
+
+
+### Features
+
+* Add the new logo throughout ([ba1cce3](https://github.com/Einlanzerous/aperture/commit/ba1cce368ad0d515dc98eea478d6702ec7767ad5))
+
 ## [1.1.1](https://github.com/Einlanzerous/aperture/compare/v1.1.0...v1.1.1) (2026-03-12)
 
 
