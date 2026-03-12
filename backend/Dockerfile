@@ -7,6 +7,7 @@ COPY . .
 RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o aperture ./cmd/server
 
 FROM scratch
-COPY --from=builder /app/aperture /aperture
+WORKDIR /app
+COPY --from=builder /app/aperture /app/aperture
 EXPOSE 8080
-ENTRYPOINT ["/aperture"]
+ENTRYPOINT ["/app/aperture"]
