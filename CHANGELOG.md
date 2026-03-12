@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Einlanzerous/aperture/compare/v1.1.0...v1.1.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* hrefs should point to functional addr ([41f1929](https://github.com/Einlanzerous/aperture/commit/41f1929144222d9733ffcf70322da5a088cf9229))
+
 ## [1.1.0](https://github.com/Einlanzerous/aperture/compare/v1.0.0...v1.1.0) (2026-03-12)
 
 
