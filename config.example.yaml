@@ -38,7 +38,9 @@ docker_socket: "/var/run/docker.sock"
 #   name      Display name shown on the widget card.
 #   type      "http" or "docker"
 #   category  Optional group label shown in the card footer.
-#   href      Optional URL to open when the card is clicked. If omitted,
+#   href      URL to open when the card is clicked. Use this to point to the
+#             externally reachable UI (e.g. http://your-server:9000) rather
+#             than the internal localhost health-check address. If omitted,
 #             HTTP services fall back to opening their health-check url.
 #   size      Grid column span — s (1/3), m (2/3), l (full-width).
 #             Defaults to s if omitted.
@@ -67,6 +69,7 @@ services:
   - name: "Nginx Proxy Manager"
     type: http
     url: "http://localhost:81"   # admin UI port
+    href: "http://your-server:81"
     category: "Management"
     size: s
 
@@ -74,12 +77,14 @@ services:
   - name: "Jellyfin"
     type: http
     url: "http://localhost:8096"
+    href: "http://your-server:8096"
     category: "Media"
     size: s
 
   - name: "Plex"
     type: http
     url: "http://localhost:32400/web"
+    href: "http://your-server:32400/web"
     category: "Media"
     size: s
 
@@ -87,12 +92,14 @@ services:
   - name: "Uptime Kuma"
     type: http
     url: "http://localhost:3001"
+    href: "http://your-server:3001"
     category: "Monitoring"
     size: s
 
   - name: "Netdata"
     type: http
     url: "http://localhost:19999"
+    href: "http://your-server:19999"
     category: "Monitoring"
     size: s
 
@@ -100,6 +107,7 @@ services:
   - name: "Nextcloud"
     type: http
     url: "http://localhost:8080"
+    href: "http://your-server:8080"
     category: "Storage"
     size: m   # ← 2/3 width example
 
@@ -107,12 +115,14 @@ services:
   - name: "Home Assistant"
     type: http
     url: "http://localhost:8123"
+    href: "http://your-server:8123"
     category: "Automation"
     size: s
 
   - name: "n8n"
     type: http
     url: "http://localhost:5678"
+    href: "http://your-server:5678"
     category: "Automation"
     size: s
 
@@ -120,6 +130,7 @@ services:
   - name: "Vaultwarden"
     type: http
     url: "http://localhost:8280"
+    href: "http://your-server:8280"
     category: "Security"
     size: s
 
@@ -127,6 +138,7 @@ services:
   - name: "Gitea"
     type: http
     url: "http://localhost:3030"
+    href: "http://your-server:3030"
     category: "Dev"
     size: s
 
