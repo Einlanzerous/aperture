@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/Einlanzerous/aperture/compare/v1.0.0...v1.1.0) (2026-03-12)
+
+
+### Features
+
+* Various upgrades, cleanup, and UI refresh. Also added the new logo ([d0131aa](https://github.com/Einlanzerous/aperture/commit/d0131aa3a47762fada6a44241ff0a7fa5c3463ab))
+
+
+### Bug Fixes
+
+* Fix errors around containers spinning up ([ded3132](https://github.com/Einlanzerous/aperture/commit/ded3132691028f05d76c80416652701a0ceaee00))
+
 ## 1.0.0 (2026-03-12)
 
 
