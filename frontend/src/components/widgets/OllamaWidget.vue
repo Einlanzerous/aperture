@@ -49,10 +49,6 @@ function fmtSize(bytes: number): string {
   return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / 1048576).toFixed(0)} MB`
 }
 
-/** Extract a short label for the model family, e.g. "llama3" → "Llama 3". */
-function familyLabel(model: OllamaModel): string {
-  return model.details?.family ?? model.name.split(':')[0] ?? ''
-}
 </script>
 
 <template>

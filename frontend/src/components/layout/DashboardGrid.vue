@@ -1,13 +1,4 @@
 <script setup lang="ts">
-import type { WidgetSize } from '@/types'
-
-// Grid uses 3 columns; each widget declares its own col-span via the size prop.
-const SIZE_CLASS: Record<WidgetSize, string> = {
-  s: 'col-span-1',              // 1/3 width
-  m: 'col-span-1 md:col-span-2', // 2/3 width
-  l: 'col-span-1 md:col-span-3', // full width
-}
-
 defineProps<{
   // Callers render their widgets as named slots or default slot children.
   // The grid only controls the outer layout.
