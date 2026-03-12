@@ -3,9 +3,8 @@ RUN apk add --no-cache git
 WORKDIR /app
 COPY go.mod ./
 COPY go.sum* ./
-RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o aperture ./cmd/server
+RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o aperture ./cmd/server
 
 FROM scratch
 COPY --from=builder /app/aperture /aperture
