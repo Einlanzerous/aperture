@@ -17,6 +17,8 @@ defineProps<{
 </template>
 
 <script lang="ts">
+import type { WidgetSize } from '@/types'
+
 // Exported so App.vue can map WidgetSize → Tailwind class without coupling.
 export const widgetSizeClass = (size: WidgetSize = 's') =>
   ({
