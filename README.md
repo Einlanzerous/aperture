@@ -10,6 +10,10 @@
 
 > Inspired by Homer, built for more.
 
+<p align="center">
+  <img src="docs/aperture_example.png" alt="Aperture Dashboard Example" />
+</p>
+
 ---
 
 ## Features
