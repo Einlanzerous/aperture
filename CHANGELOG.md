@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Einlanzerous/aperture/compare/v1.2.0...v1.3.0) (2026-03-15)
+
+
+### Features
+
+* Update README to include example image ([0168585](https://github.com/Einlanzerous/aperture/commit/01685858b37fa8ee44e05066985feaec844242d3))
+
 ## [1.2.0](https://github.com/Einlanzerous/aperture/compare/v1.1.1...v1.2.0) (2026-03-12)
 
 
