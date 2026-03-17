@@ -5,10 +5,12 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/aperture-dashboard/aperture/internal/checker"
 	"github.com/aperture-dashboard/aperture/internal/config"
+	"github.com/aperture-dashboard/aperture/internal/store"
 	"github.com/aperture-dashboard/aperture/internal/system"
 )
 
@@ -22,14 +24,16 @@ type Handler struct {
 	worker     *checker.Worker
 	sysMonitor *system.Monitor
 	cfg        *config.Config
+	store      store.Store
 	httpClient *http.Client
 }
 
-func NewHandler(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config) *Handler {
+func NewHandler(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config, s store.Store) *Handler {
 	return &Handler{
 		worker:     worker,
 		sysMonitor: sysMonitor,
 		cfg:        cfg,
+		store:      s,
 		httpClient: &http.Client{Timeout: handlerTimeout},
 	}
 }
@@ -108,4 +112,81 @@ func (h *Handler) GetOllamaModels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)
 	_, _ = w.Write(body)
+}
+
+// GetServiceHistory returns raw recent check records for a single service.
+// Query params: period (duration string, default "24h")
+func (h *Handler) GetServiceHistory(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		writeError(w, http.StatusServiceUnavailable, "storage not configured")
+		return
+	}
+
+	name := r.PathValue("name")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "service name is required")
+		return
+	}
+
+	period := 24 * time.Hour
+	if p := r.URL.Query().Get("period"); p != "" {
+		parsed, err := time.ParseDuration(p)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid period: "+err.Error())
+			return
+		}
+		period = parsed
+	}
+
+	records, err := h.store.GetRecentHistory(r.Context(), name, period)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to fetch history: "+err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"service": name,
+		"period":  period.String(),
+		"records": records,
+	})
+}
+
+// GetServiceUptime returns daily summaries for a single service.
+// Query params: days (int, default 30)
+func (h *Handler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {
+	if h.store == nil {
+		writeError(w, http.StatusServiceUnavailable, "storage not configured")
+		return
+	}
+
+	name := r.PathValue("name")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "service name is required")
+		return
+	}
+
+	days := 30
+	if d := r.URL.Query().Get("days"); d != "" {
+		parsed, err := strconv.Atoi(d)
+		if err != nil || parsed <= 0 {
+			writeError(w, http.StatusBadRequest, "days must be a positive integer")
+			return
+		}
+		days = parsed
+	}
+
+	to := time.Now().UTC()
+	from := to.AddDate(0, 0, -days)
+
+	summaries, err := h.store.GetDailySummaries(r.Context(), name, from, to)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to fetch uptime: "+err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"service":   name,
+		"days":      days,
+		"summaries": summaries,
+	})
 }

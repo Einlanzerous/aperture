@@ -13,6 +13,9 @@ import (
 	"github.com/aperture-dashboard/aperture/internal/api"
 	"github.com/aperture-dashboard/aperture/internal/checker"
 	"github.com/aperture-dashboard/aperture/internal/config"
+	"github.com/aperture-dashboard/aperture/internal/store"
+	"github.com/aperture-dashboard/aperture/internal/store/postgres"
+	"github.com/aperture-dashboard/aperture/internal/store/sqlite"
 	"github.com/aperture-dashboard/aperture/internal/system"
 )
 
@@ -28,11 +31,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Open persistent store (nil if storage is not configured).
+	historyStore, err := openStore(context.Background(), cfg.Storage)
+	if err != nil {
+		slog.Error("open store", "error", err)
+		os.Exit(1)
+	}
+	if historyStore != nil {
+		slog.Info("storage enabled", "driver", cfg.Storage.Driver)
+	}
+
 	worker := checker.NewWorker(cfg)
+	if historyStore != nil {
+		worker.SetStore(historyStore)
+	}
 	worker.Start()
 
 	sysMonitor := system.NewMonitor()
-	router := api.NewRouter(worker, sysMonitor, cfg)
+	router := api.NewRouter(worker, sysMonitor, cfg, historyStore)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
@@ -59,9 +75,27 @@ func main() {
 	defer cancel()
 
 	worker.Stop(ctx)
+	if historyStore != nil {
+		if err := historyStore.Close(); err != nil {
+			slog.Error("store close", "error", err)
+		}
+	}
 	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("forced shutdown", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("stopped")
+}
+
+func openStore(ctx context.Context, cfg config.StorageConfig) (store.Store, error) {
+	switch cfg.Driver {
+	case "":
+		return nil, nil
+	case "sqlite":
+		return sqlite.Open(ctx, cfg.DSN)
+	case "postgres":
+		return postgres.Open(ctx, cfg.DSN)
+	default:
+		return nil, fmt.Errorf("unsupported storage driver: %q", cfg.Driver)
+	}
 }

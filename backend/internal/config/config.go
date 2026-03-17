@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 const (
-	DefaultPort          = 8888
-	DefaultCheckInterval = 30
-	DefaultTitle         = "Aperture"
-	DefaultDockerSocket  = "/var/run/docker.sock"
+	DefaultPort              = 8888
+	DefaultCheckInterval     = 30
+	DefaultTitle             = "Aperture"
+	DefaultDockerSocket      = "/var/run/docker.sock"
+	DefaultRetentionRaw      = 48 * time.Hour
+	DefaultRetentionSummary  = 30 * 24 * time.Hour // 30 days
+	DefaultCompactCycleCount = 100
 )
 
 type ServiceType string
@@ -43,6 +47,17 @@ type SystemConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
+type RetentionConfig struct {
+	Raw     time.Duration `yaml:"raw"`
+	Summary time.Duration `yaml:"summary"`
+}
+
+type StorageConfig struct {
+	Driver    string          `yaml:"driver"` // "sqlite", "postgres", or "" (disabled)
+	DSN       string          `yaml:"dsn"`
+	Retention RetentionConfig `yaml:"retention"`
+}
+
 type Config struct {
 	Port          int             `yaml:"port"`
 	CheckInterval int             `yaml:"check_interval"` // seconds
@@ -52,6 +67,7 @@ type Config struct {
 	Services      []ServiceConfig `yaml:"services"`
 	Ollama        OllamaConfig    `yaml:"ollama"`
 	System        SystemConfig    `yaml:"system"`
+	Storage       StorageConfig   `yaml:"storage"`
 }
 
 func Load(path string) (*Config, error) {
@@ -72,6 +88,7 @@ func Load(path string) (*Config, error) {
 	}
 
 	applyEnvOverrides(cfg)
+	applyStorageDefaults(cfg)
 
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("config validation: %w", err)
@@ -95,6 +112,17 @@ func applyEnvOverrides(cfg *Config) {
 		cfg.Title = v
 	}
 }
+
+func applyStorageDefaults(cfg *Config) {
+	if cfg.Storage.Retention.Raw == 0 {
+		cfg.Storage.Retention.Raw = DefaultRetentionRaw
+	}
+	if cfg.Storage.Retention.Summary == 0 {
+		cfg.Storage.Retention.Summary = DefaultRetentionSummary
+	}
+}
+
+var validDrivers = map[string]bool{"": true, "sqlite": true, "postgres": true}
 
 func (c *Config) Validate() error {
 	if c.CheckInterval <= 0 {
@@ -130,6 +158,19 @@ func (c *Config) Validate() error {
 		if !validSizes[svc.Size] {
 			return fmt.Errorf("service %q: size must be s, m, or l; got %q", svc.Name, svc.Size)
 		}
+	}
+
+	if !validDrivers[c.Storage.Driver] {
+		return fmt.Errorf("storage.driver must be sqlite, postgres, or empty; got %q", c.Storage.Driver)
+	}
+	if c.Storage.Driver != "" && c.Storage.DSN == "" {
+		return fmt.Errorf("storage.dsn is required when driver is %q", c.Storage.Driver)
+	}
+	if c.Storage.Retention.Raw <= 0 {
+		return fmt.Errorf("storage.retention.raw must be positive, got %s", c.Storage.Retention.Raw)
+	}
+	if c.Storage.Retention.Summary <= 0 {
+		return fmt.Errorf("storage.retention.summary must be positive, got %s", c.Storage.Retention.Summary)
 	}
 
 	return nil

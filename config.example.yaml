@@ -176,3 +176,30 @@ ollama:
 # Load average is Linux/macOS only; the widget degrades gracefully on Windows.
 system:
   enabled: true
+
+# ─── Persistent history (optional) ───────────────────────────────────────────
+# Stores health-check results for uptime tracking and historical graphs.
+# Omit this section entirely to disable persistence (in-memory only).
+#
+# Supported drivers:
+#   sqlite   — file-based, zero setup. Good for single-node deployments.
+#   postgres — use an existing Postgres instance for multi-node or heavier loads.
+#
+# Retention:
+#   raw      — how long to keep individual check records (default: 48h).
+#              After this window, records are compacted into daily summaries.
+#   summary  — how long to keep daily summaries (default: 30d / 720h).
+#
+# storage:
+#   driver: "sqlite"
+#   dsn: "./aperture.db"
+#   retention:
+#     raw: "48h"
+#     summary: "720h"
+#
+# storage:
+#   driver: "postgres"
+#   dsn: "postgres://user:password@localhost:5432/aperture?sslmode=disable"
+#   retention:
+#     raw: "48h"
+#     summary: "720h"

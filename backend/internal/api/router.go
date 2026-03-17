@@ -5,19 +5,22 @@ import (
 
 	"github.com/aperture-dashboard/aperture/internal/checker"
 	"github.com/aperture-dashboard/aperture/internal/config"
+	"github.com/aperture-dashboard/aperture/internal/store"
 	"github.com/aperture-dashboard/aperture/internal/system"
 	"github.com/rs/cors"
 )
 
 // NewRouter wires up all API routes and wraps the mux with a CORS handler.
-func NewRouter(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config) http.Handler {
-	h := NewHandler(worker, sysMonitor, cfg)
+func NewRouter(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config, s store.Store) http.Handler {
+	h := NewHandler(worker, sysMonitor, cfg, s)
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/health", h.Health)
 	mux.HandleFunc("GET /api/config", h.GetConfig)
 	mux.HandleFunc("GET /api/services", h.GetServices)
+	mux.HandleFunc("GET /api/services/{name}/history", h.GetServiceHistory)
+	mux.HandleFunc("GET /api/services/{name}/uptime", h.GetServiceUptime)
 	mux.HandleFunc("GET /api/system/resources", h.GetSystemResources)
 	mux.HandleFunc("GET /api/ollama/models", h.GetOllamaModels)
 
