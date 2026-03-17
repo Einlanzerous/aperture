@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/Einlanzerous/aperture/compare/v1.2.0...v1.3.0) (2026-03-17)
+
+
+### Features
+
+* Track history of various health stats, support DB layer, zero config support ([64eab20](https://github.com/Einlanzerous/aperture/commit/64eab20692616312c33ebc03b9f2b031b27cd659))
+* Update README to include example image ([0168585](https://github.com/Einlanzerous/aperture/commit/01685858b37fa8ee44e05066985feaec844242d3))
+
 ## [1.2.0](https://github.com/Einlanzerous/aperture/compare/v1.1.1...v1.2.0) (2026-03-12)
 
 
