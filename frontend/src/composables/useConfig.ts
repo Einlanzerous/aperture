@@ -5,10 +5,11 @@ import { getErrorMessage } from '@/utils/format'
 import type { DashboardConfig } from '@/types'
 
 const defaultConfig: DashboardConfig = {
-  title:         'Aperture',
-  checkInterval: 30,
-  ollamaEnabled: false,
-  systemEnabled: false,
+  title:          'Aperture',
+  checkInterval:  30,
+  ollamaEnabled:  false,
+  systemEnabled:  false,
+  actionsEnabled: false,
 }
 
 export function useConfig() {

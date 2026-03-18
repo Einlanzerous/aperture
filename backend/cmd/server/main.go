@@ -13,6 +13,7 @@ import (
 	"github.com/aperture-dashboard/aperture/internal/api"
 	"github.com/aperture-dashboard/aperture/internal/checker"
 	"github.com/aperture-dashboard/aperture/internal/config"
+	"github.com/aperture-dashboard/aperture/internal/semaphore"
 	"github.com/aperture-dashboard/aperture/internal/store"
 	"github.com/aperture-dashboard/aperture/internal/store/postgres"
 	"github.com/aperture-dashboard/aperture/internal/store/sqlite"
@@ -41,6 +42,15 @@ func main() {
 		slog.Info("storage enabled", "driver", cfg.Storage.Driver)
 	}
 
+	// Set up action manager if Semaphore actions are configured.
+	var actionMgr *semaphore.Manager
+	if len(cfg.Actions) > 0 {
+		token := os.Getenv(cfg.Semaphore.TokenEnv)
+		client := semaphore.NewClient(cfg.Semaphore.URL, token)
+		actionMgr = semaphore.NewManager(client, cfg.Actions)
+		slog.Info("actions enabled", "count", len(cfg.Actions))
+	}
+
 	worker := checker.NewWorker(cfg)
 	if historyStore != nil {
 		worker.SetStore(historyStore)
@@ -48,7 +58,7 @@ func main() {
 	worker.Start()
 
 	sysMonitor := system.NewMonitor()
-	router := api.NewRouter(worker, sysMonitor, cfg, historyStore)
+	router := api.NewRouter(worker, sysMonitor, cfg, historyStore, actionMgr)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),

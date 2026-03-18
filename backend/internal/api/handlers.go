@@ -10,6 +10,7 @@ import (
 
 	"github.com/aperture-dashboard/aperture/internal/checker"
 	"github.com/aperture-dashboard/aperture/internal/config"
+	"github.com/aperture-dashboard/aperture/internal/semaphore"
 	"github.com/aperture-dashboard/aperture/internal/store"
 	"github.com/aperture-dashboard/aperture/internal/system"
 )
@@ -25,15 +26,17 @@ type Handler struct {
 	sysMonitor *system.Monitor
 	cfg        *config.Config
 	store      store.Store
+	actions    *semaphore.Manager
 	httpClient *http.Client
 }
 
-func NewHandler(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config, s store.Store) *Handler {
+func NewHandler(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config, s store.Store, actions *semaphore.Manager) *Handler {
 	return &Handler{
 		worker:     worker,
 		sysMonitor: sysMonitor,
 		cfg:        cfg,
 		store:      s,
+		actions:    actions,
 		httpClient: &http.Client{Timeout: handlerTimeout},
 	}
 }
@@ -58,10 +61,11 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // GetConfig returns dashboard-level configuration for the frontend.
 func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"title":         h.cfg.Title,
-		"checkInterval": h.cfg.CheckInterval,
-		"ollamaEnabled": h.cfg.Ollama.URL != "",
-		"systemEnabled": h.cfg.System.Enabled,
+		"title":          h.cfg.Title,
+		"checkInterval":  h.cfg.CheckInterval,
+		"ollamaEnabled":  h.cfg.Ollama.URL != "",
+		"systemEnabled":  h.cfg.System.Enabled,
+		"actionsEnabled": h.actions != nil,
 	})
 }
 
@@ -189,4 +193,59 @@ func (h *Handler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {
 		"days":      days,
 		"summaries": summaries,
 	})
+}
+
+// GetActions returns the current state of all configured actions.
+func (h *Handler) GetActions(w http.ResponseWriter, r *http.Request) {
+	if h.actions == nil {
+		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"actions": h.actions.ListActions(),
+	})
+}
+
+// TriggerAction fires a Semaphore task for the named action.
+func (h *Handler) TriggerAction(w http.ResponseWriter, r *http.Request) {
+	if h.actions == nil {
+		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+		return
+	}
+
+	name := r.PathValue("name")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "action name is required")
+		return
+	}
+
+	state, err := h.actions.Trigger(r.Context(), name)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusAccepted, state)
+}
+
+// GetActionStatus returns the current status of a specific action.
+func (h *Handler) GetActionStatus(w http.ResponseWriter, r *http.Request) {
+	if h.actions == nil {
+		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+		return
+	}
+
+	name := r.PathValue("name")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "action name is required")
+		return
+	}
+
+	state, err := h.actions.GetStatus(r.Context(), name)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, state)
 }

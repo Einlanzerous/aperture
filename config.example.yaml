@@ -165,6 +165,28 @@ services:
     category: "Database"
     size: s
 
+# ─── Semaphore actions ────────────────────────────────────────────────────────
+#
+# Trigger Semaphore (Ansible automation) task templates from the dashboard.
+# Each action appears as a clickable widget card with a "Run" button.
+#
+# semaphore:
+#   url: "http://localhost:3000"         # Semaphore base URL
+#   token_env: "SEMAPHORE_API_TOKEN"     # env var holding the API token
+#
+# actions:
+#   - name: "Deploy App"
+#     project_id: 1
+#     template_id: 5
+#     category: "Deploy"
+#     size: s
+#
+#   - name: "Backup Database"
+#     project_id: 1
+#     template_id: 8
+#     category: "Maintenance"
+#     size: s
+
 # ─── Ollama widget ────────────────────────────────────────────────────────────
 # Shows a live list of models pulled to your Ollama instance.
 # Leave url blank (or remove this section entirely) to hide the widget.

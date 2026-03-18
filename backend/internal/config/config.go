@@ -28,6 +28,20 @@ const (
 
 var validSizes = map[string]bool{"": true, "s": true, "m": true, "l": true}
 
+type SemaphoreConfig struct {
+	URL      string `yaml:"url"`
+	TokenEnv string `yaml:"token_env"` // env var name holding the API token
+}
+
+type ActionConfig struct {
+	Name       string `yaml:"name"`
+	ProjectID  int    `yaml:"project_id"`
+	TemplateID int    `yaml:"template_id"`
+	Category   string `yaml:"category,omitempty"`
+	Icon       string `yaml:"icon,omitempty"`
+	Size       string `yaml:"size,omitempty"`
+}
+
 type ServiceConfig struct {
 	Name      string      `yaml:"name"`
 	Type      ServiceType `yaml:"type"`
@@ -68,6 +82,8 @@ type Config struct {
 	Ollama        OllamaConfig    `yaml:"ollama"`
 	System        SystemConfig    `yaml:"system"`
 	Storage       StorageConfig   `yaml:"storage"`
+	Semaphore     SemaphoreConfig `yaml:"semaphore"`
+	Actions       []ActionConfig  `yaml:"actions"`
 }
 
 func Load(path string) (*Config, error) {
@@ -171,6 +187,37 @@ func (c *Config) Validate() error {
 	}
 	if c.Storage.Retention.Summary <= 0 {
 		return fmt.Errorf("storage.retention.summary must be positive, got %s", c.Storage.Retention.Summary)
+	}
+
+	if len(c.Actions) > 0 {
+		if c.Semaphore.URL == "" {
+			return fmt.Errorf("semaphore.url is required when actions are configured")
+		}
+		if c.Semaphore.TokenEnv == "" {
+			return fmt.Errorf("semaphore.token_env is required when actions are configured")
+		}
+		if os.Getenv(c.Semaphore.TokenEnv) == "" {
+			return fmt.Errorf("environment variable %q (semaphore.token_env) is not set", c.Semaphore.TokenEnv)
+		}
+	}
+
+	for i, action := range c.Actions {
+		if action.Name == "" {
+			return fmt.Errorf("actions[%d]: name is required", i)
+		}
+		if seen[action.Name] {
+			return fmt.Errorf("actions[%d]: duplicate name %q (names must be unique across services and actions)", i, action.Name)
+		}
+		seen[action.Name] = true
+		if action.ProjectID <= 0 {
+			return fmt.Errorf("action %q: project_id must be > 0", action.Name)
+		}
+		if action.TemplateID <= 0 {
+			return fmt.Errorf("action %q: template_id must be > 0", action.Name)
+		}
+		if !validSizes[action.Size] {
+			return fmt.Errorf("action %q: size must be s, m, or l; got %q", action.Name, action.Size)
+		}
 	}
 
 	return nil

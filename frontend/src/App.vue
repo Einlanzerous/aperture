@@ -2,11 +2,13 @@
 import { computed, onMounted } from 'vue'
 import DashboardGrid, { widgetSizeClass } from '@/components/layout/DashboardGrid.vue'
 import ServiceWidget  from '@/components/widgets/ServiceWidget.vue'
+import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
 import ResourceWidget from '@/components/widgets/ResourceWidget.vue'
 import SkeletonCard   from '@/components/ui/SkeletonCard.vue'
 import { useConfig }   from '@/composables/useConfig'
 import { useServices } from '@/composables/useServices'
+import { useActions }  from '@/composables/useActions'
 
 // ─── Dashboard config (fetched once on mount) ─────────────────────────────────
 
@@ -17,6 +19,10 @@ onMounted(loadConfig)
 
 const serviceInterval = computed(() => (config.value.checkInterval || 30) * 1000)
 const { services, loading, lastUpdated, refresh } = useServices(serviceInterval)
+
+// ─── Actions (interval reacts to config changes) ──────────────────────────
+
+const { actions } = useActions(serviceInterval)
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -72,6 +78,15 @@ function fmtTime(d: Date | null): string {
           :class="widgetSizeClass(service.size ?? 's')"
         >
           <ServiceWidget :service="service" :size="service.size ?? 's'" />
+        </div>
+
+        <!-- Action widgets -->
+        <div
+          v-for="action in actions"
+          :key="`action-${action.name}`"
+          :class="widgetSizeClass(action.size ?? 's')"
+        >
+          <ActionWidget :action="action" />
         </div>
 
         <!-- Ollama widget — medium width if enabled -->

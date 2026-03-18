@@ -72,8 +72,29 @@ export interface OllamaModelsResponse {
 }
 
 export interface DashboardConfig {
-  title:         string
-  checkInterval: number
-  ollamaEnabled: boolean
-  systemEnabled: boolean
+  title:          string
+  checkInterval:  number
+  ollamaEnabled:  boolean
+  systemEnabled:  boolean
+  actionsEnabled: boolean
+}
+
+// ─── Action types ───────────────────────────────────────────────────────────
+
+export type ActionStatus = 'idle' | 'waiting' | 'starting' | 'running' | 'success' | 'error' | 'stopped'
+
+export interface ActionState {
+  name:         string
+  projectId:    number
+  templateId:   number
+  category?:    string
+  icon?:        string
+  size?:        WidgetSize
+  taskId?:      number
+  taskStatus:   ActionStatus
+  triggeredAt?: string
+}
+
+export interface ActionsResponse {
+  actions: ActionState[]
 }
