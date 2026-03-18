@@ -10,6 +10,7 @@ const defaultConfig: DashboardConfig = {
   ollamaEnabled:  false,
   systemEnabled:  false,
   actionsEnabled: false,
+  storageEnabled: false,
 }
 
 export function useConfig() {

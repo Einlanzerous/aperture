@@ -1,17 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRef } from 'vue'
 import type { ServiceStatusData, WidgetSize } from '@/types'
 import { STATUS_COLORS } from '@/constants/status'
+import UptimeBar from '@/components/ui/UptimeBar.vue'
+import DetailPanel from '@/components/ui/DetailPanel.vue'
+import { useDetailMode } from '@/composables/useDetailMode'
+import { useServiceHistory } from '@/composables/useServiceHistory'
 
 const props = withDefaults(
   defineProps<{
     service: ServiceStatusData
     size?: WidgetSize
+    storageEnabled?: boolean
   }>(),
-  { size: 's' },
+  { size: 's', storageEnabled: false },
 )
 
 const sc = computed(() => STATUS_COLORS[props.service.status] ?? STATUS_COLORS.unknown)
+
+const serviceDefault = computed(() => props.service.detailDefault ?? false)
+const { showDetail } = useDetailMode(serviceDefault)
+const { summaries, records, detailLoaded } = useServiceHistory(
+  toRef(() => props.service.name),
+  showDetail,
+  toRef(() => props.storageEnabled),
+)
 
 const initials = computed(() =>
   props.service.name
@@ -86,6 +99,16 @@ function timeAgo(iso: string): string {
         {{ sc.label }}
       </span>
     </div>
+
+    <!-- Uptime bar -->
+    <UptimeBar v-if="summaries.length > 0" :summaries="summaries" />
+
+    <!-- Detail panel (sparkline + stats) -->
+    <DetailPanel
+      v-if="showDetail && detailLoaded"
+      :records="records"
+      :summaries="summaries"
+    />
 
     <!-- Footer row -->
     <div class="flex items-center justify-between gap-2">

@@ -6,9 +6,10 @@ import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
 import ResourceWidget from '@/components/widgets/ResourceWidget.vue'
 import SkeletonCard   from '@/components/ui/SkeletonCard.vue'
-import { useConfig }   from '@/composables/useConfig'
-import { useServices } from '@/composables/useServices'
-import { useActions }  from '@/composables/useActions'
+import { useConfig }     from '@/composables/useConfig'
+import { useServices }   from '@/composables/useServices'
+import { useActions }    from '@/composables/useActions'
+import { useDetailMode } from '@/composables/useDetailMode'
 
 // ─── Dashboard config (fetched once on mount) ─────────────────────────────────
 
@@ -23,6 +24,10 @@ const { services, loading, lastUpdated, refresh } = useServices(serviceInterval)
 // ─── Actions (interval reacts to config changes) ──────────────────────────
 
 const { actions } = useActions(serviceInterval)
+
+// ─── Detail mode toggle ─────────────────────────────────────────────────────
+
+const { isDetailMode, toggleGlobal } = useDetailMode()
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -47,6 +52,19 @@ function fmtTime(d: Date | null): string {
 
         <div class="flex items-center gap-3 text-xs text-gray-500">
           <span v-if="lastUpdated">Updated {{ fmtTime(lastUpdated) }}</span>
+          <button
+            v-if="config.storageEnabled"
+            class="rounded-md border border-gray-700 bg-gray-800 p-1.5
+                   transition-colors hover:border-gray-600 hover:bg-gray-700"
+            :class="isDetailMode ? 'text-emerald-400' : 'text-gray-300'"
+            title="Toggle detailed history"
+            @click="toggleGlobal"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          </button>
           <button
             class="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1
                    text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-700"
@@ -77,7 +95,7 @@ function fmtTime(d: Date | null): string {
           :key="service.name"
           :class="widgetSizeClass(service.size ?? 's')"
         >
-          <ServiceWidget :service="service" :size="service.size ?? 's'" />
+          <ServiceWidget :service="service" :size="service.size ?? 's'" :storage-enabled="config.storageEnabled" />
         </div>
 
         <!-- Action widgets -->

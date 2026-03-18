@@ -66,6 +66,7 @@ func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 		"ollamaEnabled":  h.cfg.Ollama.URL != "",
 		"systemEnabled":  h.cfg.System.Enabled,
 		"actionsEnabled": h.actions != nil,
+		"storageEnabled": h.store != nil,
 	})
 }
 

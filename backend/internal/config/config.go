@@ -43,14 +43,15 @@ type ActionConfig struct {
 }
 
 type ServiceConfig struct {
-	Name      string      `yaml:"name"`
-	Type      ServiceType `yaml:"type"`
-	URL       string      `yaml:"url,omitempty"`
-	Container string      `yaml:"container,omitempty"`
-	Icon      string      `yaml:"icon,omitempty"`
-	Category  string      `yaml:"category,omitempty"`
-	Href      string      `yaml:"href,omitempty"`
-	Size      string      `yaml:"size,omitempty"` // s | m | l
+	Name          string      `yaml:"name"`
+	Type          ServiceType `yaml:"type"`
+	URL           string      `yaml:"url,omitempty"`
+	Container     string      `yaml:"container,omitempty"`
+	Icon          string      `yaml:"icon,omitempty"`
+	Category      string      `yaml:"category,omitempty"`
+	Href          string      `yaml:"href,omitempty"`
+	Size          string      `yaml:"size,omitempty"`           // s | m | l
+	DetailDefault bool        `yaml:"detail_default,omitempty"` // show detailed history view by default
 }
 
 type OllamaConfig struct {

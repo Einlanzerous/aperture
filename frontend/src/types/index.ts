@@ -20,6 +20,7 @@ export interface ServiceStatusData {
   category?:    string
   href?:        string
   size?:        WidgetSize
+  detailDefault?: boolean
 }
 
 export interface ServicesResponse {
@@ -77,6 +78,44 @@ export interface DashboardConfig {
   ollamaEnabled:  boolean
   systemEnabled:  boolean
   actionsEnabled: boolean
+  storageEnabled: boolean
+}
+
+// ─── History types ──────────────────────────────────────────────────────────
+
+export interface CheckRecord {
+  serviceName:  string
+  serviceType:  string
+  status:       string
+  statusCode?:  number
+  responseTime?: number  // ms
+  message?:     string
+  checkedAt:    string   // ISO-8601
+}
+
+export interface DailySummary {
+  serviceName:     string
+  date:            string  // ISO-8601
+  totalChecks:     number
+  healthyChecks:   number
+  unhealthyChecks: number
+  degradedChecks:  number
+  avgResponseMs:   number
+  minResponseMs:   number
+  maxResponseMs:   number
+  uptimePct:       number
+}
+
+export interface HistoryResponse {
+  service: string
+  period:  string
+  records: CheckRecord[]
+}
+
+export interface UptimeResponse {
+  service:   string
+  days:      number
+  summaries: DailySummary[]
 }
 
 // ─── Action types ───────────────────────────────────────────────────────────

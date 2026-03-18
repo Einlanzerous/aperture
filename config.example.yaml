@@ -65,6 +65,7 @@ services:
     href: "https://portainer.mydomain.com"   # launch URL (card click opens this)
     category: "Management"
     size: s
+    detail_default: true   # show detailed history view (sparkline + stats) by default
 
   - name: "Nginx Proxy Manager"
     type: http

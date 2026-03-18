@@ -6,6 +6,10 @@ export const API = {
   actions:       '/api/actions',
   actionTrigger: (name: string) => `/api/actions/${encodeURIComponent(name)}/trigger`,
   actionStatus:  (name: string) => `/api/actions/${encodeURIComponent(name)}/status`,
+  serviceHistory: (name: string, period = '24h') =>
+    `/api/services/${encodeURIComponent(name)}/history?period=${encodeURIComponent(period)}`,
+  serviceUptime: (name: string, days = 30) =>
+    `/api/services/${encodeURIComponent(name)}/uptime?days=${days}`,
 } as const
 
 export async function apiFetch<T>(path: string): Promise<T> {
