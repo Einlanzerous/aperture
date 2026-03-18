@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/Einlanzerous/aperture/compare/v1.3.0...v1.4.0) (2026-03-18)
+
+
+### Features
+
+* Detailed view added to frontend to display history ([978f12e](https://github.com/Einlanzerous/aperture/commit/978f12ecede1d24eea1f2a47f4759219ccf75b1f))
+* Semaphore action support (new widget) ([ef47c90](https://github.com/Einlanzerous/aperture/commit/ef47c908b04f693f08ecca20fe0a72c197b77eb3))
+
 ## [1.3.0](https://github.com/Einlanzerous/aperture/compare/v1.2.0...v1.3.0) (2026-03-17)
 
 
