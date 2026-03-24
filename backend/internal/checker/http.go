@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,19 +20,22 @@ type HTTPChecker struct {
 	client *http.Client
 }
 
-func NewHTTPChecker(url string) *HTTPChecker {
-	return &HTTPChecker{
-		url: url,
-		client: &http.Client{
-			Timeout: defaultHTTPTimeout,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if len(via) >= maxHTTPRedirects {
-					return fmt.Errorf("too many redirects")
-				}
-				return nil
-			},
+func NewHTTPChecker(url string, skipVerify bool) *HTTPChecker {
+	client := &http.Client{
+		Timeout: defaultHTTPTimeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= maxHTTPRedirects {
+				return fmt.Errorf("too many redirects")
+			}
+			return nil
 		},
 	}
+	if skipVerify {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // user-opted skip_verify
+		}
+	}
+	return &HTTPChecker{url: url, client: client}
 }
 
 func (c *HTTPChecker) Check(ctx context.Context) (Status, int, int64, string) {

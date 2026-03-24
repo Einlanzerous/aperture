@@ -42,7 +42,7 @@ func NewWorker(cfg *config.Config) *Worker {
 		var c Checker
 		switch svc.Type {
 		case config.ServiceTypeHTTP:
-			c = NewHTTPChecker(svc.URL)
+			c = NewHTTPChecker(svc.URL, svc.SkipVerify)
 		case config.ServiceTypeDocker:
 			c = NewDockerChecker(svc.Container, cfg.DockerSocket)
 		default:
