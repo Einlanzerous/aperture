@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/Einlanzerous/aperture/compare/v1.5.0...v1.6.0) (2026-03-25)
+
+
+### Features
+
+* Add check_connection_only property, general cleanup ([32a54d3](https://github.com/Einlanzerous/aperture/commit/32a54d3cbbe586a5182ef98730848614194515a9))
+
 ## [1.5.0](https://github.com/Einlanzerous/aperture/compare/v1.4.0...v1.5.0) (2026-03-24)
 
 
