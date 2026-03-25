@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.7.0](https://github.com/Einlanzerous/aperture/compare/v1.6.0...v1.7.0) (2026-03-25)
+
+
+### Features
+
+* Add check_connection_only property, general cleanup ([32a54d3](https://github.com/Einlanzerous/aperture/commit/32a54d3cbbe586a5182ef98730848614194515a9))
+* Add the new logo throughout ([ba1cce3](https://github.com/Einlanzerous/aperture/commit/ba1cce368ad0d515dc98eea478d6702ec7767ad5))
+* Detailed view added to frontend to display history ([978f12e](https://github.com/Einlanzerous/aperture/commit/978f12ecede1d24eea1f2a47f4759219ccf75b1f))
+* Semaphore action support (new widget) ([ef47c90](https://github.com/Einlanzerous/aperture/commit/ef47c908b04f693f08ecca20fe0a72c197b77eb3))
+* Support release please, and container creation ([2a05146](https://github.com/Einlanzerous/aperture/commit/2a051468a2880038f584423aaa663a4adbcca836))
+* Support skip verify and add tests to CI ([49162af](https://github.com/Einlanzerous/aperture/commit/49162af2657043dbb413db49f959f37406118685))
+* Track history of various health stats, support DB layer, zero config support ([64eab20](https://github.com/Einlanzerous/aperture/commit/64eab20692616312c33ebc03b9f2b031b27cd659))
+* Update README to include example image ([0168585](https://github.com/Einlanzerous/aperture/commit/01685858b37fa8ee44e05066985feaec844242d3))
+* Various upgrades, cleanup, and UI refresh. Also added the new logo ([d0131aa](https://github.com/Einlanzerous/aperture/commit/d0131aa3a47762fada6a44241ff0a7fa5c3463ab))
+
+
+### Bug Fixes
+
+* add package-lock.json and go mod tidy step for CI ([e487426](https://github.com/Einlanzerous/aperture/commit/e4874266a6b1948db4ed553131b7532e0f6bc14b))
+* additional fixes ([bb57191](https://github.com/Einlanzerous/aperture/commit/bb57191b11e2f6b88039f3799b145fd52396366d))
+* build fixes for backend now ([545b38e](https://github.com/Einlanzerous/aperture/commit/545b38e76d6d9b9a26d04de21adf06ef3690ff3f))
+* build fixes for backend now ([18ee992](https://github.com/Einlanzerous/aperture/commit/18ee9927a59a4f87ebbbcceeb9e94a7ec81f2be5))
+* Build fixes for frontend ([df1260f](https://github.com/Einlanzerous/aperture/commit/df1260f13174482869ec02f9db969b0873eb8a57))
+* Fix errors around containers spinning up ([ded3132](https://github.com/Einlanzerous/aperture/commit/ded3132691028f05d76c80416652701a0ceaee00))
+* hrefs should point to functional addr ([41f1929](https://github.com/Einlanzerous/aperture/commit/41f1929144222d9733ffcf70322da5a088cf9229))
+* more build fixes for backend ([fef3763](https://github.com/Einlanzerous/aperture/commit/fef376369d308dfdb8be36fca78a116d5e2b4a8c))
+
 ## [1.6.0](https://github.com/Einlanzerous/aperture/compare/v1.5.0...v1.6.0) (2026-03-25)
 
 
