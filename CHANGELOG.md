@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/Einlanzerous/aperture/compare/v1.4.0...v1.5.0) (2026-03-24)
+
+
+### Features
+
+* Support skip verify and add tests to CI ([49162af](https://github.com/Einlanzerous/aperture/commit/49162af2657043dbb413db49f959f37406118685))
+
 ## [1.4.0](https://github.com/Einlanzerous/aperture/compare/v1.3.0...v1.4.0) (2026-03-18)
 
 
