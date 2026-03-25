@@ -2,6 +2,7 @@
 import { computed, toRef } from 'vue'
 import type { ServiceStatusData, WidgetSize } from '@/types'
 import { STATUS_COLORS } from '@/constants/status'
+import { getInitials } from '@/utils/initials'
 import UptimeBar from '@/components/ui/UptimeBar.vue'
 import DetailPanel from '@/components/ui/DetailPanel.vue'
 import { useDetailMode } from '@/composables/useDetailMode'
@@ -26,14 +27,7 @@ const { summaries, records, detailLoaded } = useServiceHistory(
   toRef(() => props.storageEnabled),
 )
 
-const initials = computed(() =>
-  props.service.name
-    .split(/[\s\-_]+/)
-    .map((w) => w[0] ?? '')
-    .join('')
-    .toUpperCase()
-    .slice(0, 2),
-)
+const initials = computed(() => getInitials(props.service.name))
 
 const displayUrl = computed(() => {
   if (props.service.url) {

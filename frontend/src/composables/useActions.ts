@@ -1,9 +1,10 @@
 import { computed, type Ref } from 'vue'
 import { usePollingFetch } from './usePollingFetch'
 import { API } from '@/utils/api'
+import { POLL_ACTIONS_MS } from '@/constants/polling'
 import type { ActionState, ActionsResponse } from '@/types'
 
-export function useActions(intervalMs: number | Ref<number> = 30_000) {
+export function useActions(intervalMs: number | Ref<number> = POLL_ACTIONS_MS) {
   const { data, loading, error, refresh } = usePollingFetch<ActionsResponse>(
     API.actions,
     intervalMs,

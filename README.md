@@ -97,6 +97,8 @@ system:
 | `check_interval` | int      | Seconds between each full round of health checks     |
 | `services[].type`| string   | `http` performs a GET request; `docker` inspects the socket |
 | `services[].size`| string   | Grid column span: `s` = 1/3, `m` = 2/3, `l` = full  |
+| `services[].skip_verify` | bool | Skip TLS certificate verification (self-signed certs) |
+| `services[].check_connection_only` | bool | Treat any non-5xx HTTP response as healthy. Useful for services that require authentication and have no unauthenticated health endpoint |
 
 ---
 

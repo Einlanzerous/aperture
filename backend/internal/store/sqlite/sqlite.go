@@ -75,7 +75,7 @@ func (s *SQLiteStore) GetDailySummaries(ctx context.Context, serviceName string,
 		 FROM check_daily_summary
 		 WHERE service = ? AND date >= ? AND date <= ?
 		 ORDER BY date ASC`,
-		serviceName, from.UTC().Format("2006-01-02"), to.UTC().Format("2006-01-02"),
+		serviceName, from.UTC().Format(store.DateFormat), to.UTC().Format(store.DateFormat),
 	)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (s *SQLiteStore) Compact(ctx context.Context, rawMaxAge time.Duration) erro
 }
 
 func (s *SQLiteStore) Prune(ctx context.Context, summaryMaxAge time.Duration) error {
-	cutoff := time.Now().UTC().Add(-summaryMaxAge).Format("2006-01-02")
+	cutoff := time.Now().UTC().Add(-summaryMaxAge).Format(store.DateFormat)
 	_, err := s.db.ExecContext(ctx, `DELETE FROM check_daily_summary WHERE date < ?`, cutoff)
 	return err
 }
@@ -176,7 +176,7 @@ func scanDailySummaries(rows *sql.Rows) ([]store.DailySummary, error) {
 		); err != nil {
 			return nil, err
 		}
-		d.Date, _ = time.Parse("2006-01-02", dateStr)
+		d.Date, _ = time.Parse(store.DateFormat, dateStr)
 		out = append(out, d)
 	}
 	return out, rows.Err()

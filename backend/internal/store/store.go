@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// DateFormat is the canonical date layout used for daily summary keys.
+const DateFormat = "2006-01-02"
+
 // CheckRecord is a single raw health-check result destined for persistent storage.
 type CheckRecord struct {
 	ServiceName  string    `json:"serviceName"`

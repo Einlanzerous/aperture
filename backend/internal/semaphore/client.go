@@ -53,19 +53,15 @@ func NewClient(baseURL, token string) *Client {
 	}
 }
 
-// TriggerTask starts a task template and returns the created task.
-func (c *Client) TriggerTask(ctx context.Context, projectID, templateID int) (*TaskResponse, error) {
-	body, err := json.Marshal(map[string]int{"template_id": templateID})
-	if err != nil {
-		return nil, fmt.Errorf("marshal request: %w", err)
-	}
-
-	url := fmt.Sprintf("%s/api/project/%d/tasks", c.baseURL, projectID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+// do executes an HTTP request against the Semaphore API and decodes the response.
+func (c *Client) do(ctx context.Context, method, url string, body io.Reader) (*TaskResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	req.Header.Set("Authorization", "Bearer "+c.token)
 
 	resp, err := c.httpClient.Do(req)
@@ -90,33 +86,18 @@ func (c *Client) TriggerTask(ctx context.Context, projectID, templateID int) (*T
 	return &task, nil
 }
 
+// TriggerTask starts a task template and returns the created task.
+func (c *Client) TriggerTask(ctx context.Context, projectID, templateID int) (*TaskResponse, error) {
+	body, err := json.Marshal(map[string]int{"template_id": templateID})
+	if err != nil {
+		return nil, fmt.Errorf("marshal request: %w", err)
+	}
+	url := fmt.Sprintf("%s/api/project/%d/tasks", c.baseURL, projectID)
+	return c.do(ctx, http.MethodPost, url, bytes.NewReader(body))
+}
+
 // GetTaskStatus fetches the current status of a task.
 func (c *Client) GetTaskStatus(ctx context.Context, projectID, taskID int) (*TaskResponse, error) {
 	url := fmt.Sprintf("%s/api/project/%d/tasks/%d", c.baseURL, projectID, taskID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("create request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("semaphore returned %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	var task TaskResponse
-	if err := json.Unmarshal(respBody, &task); err != nil {
-		return nil, fmt.Errorf("decode response: %w", err)
-	}
-	return &task, nil
+	return c.do(ctx, http.MethodGet, url, nil)
 }

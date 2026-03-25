@@ -2,6 +2,8 @@
 import { computed, ref, onUnmounted } from 'vue'
 import type { ActionState, ActionStatus } from '@/types'
 import { ACTION_STATUS_COLORS } from '@/constants/action'
+import { POLL_ACTION_STATUS_MS } from '@/constants/polling'
+import { getInitials } from '@/utils/initials'
 import { apiPost, apiFetch, API } from '@/utils/api'
 
 const props = defineProps<{ action: ActionState }>()
@@ -13,14 +15,7 @@ let resetTimer: ReturnType<typeof setTimeout> | null = null
 
 const sc = computed(() => ACTION_STATUS_COLORS[localStatus.value] ?? ACTION_STATUS_COLORS.idle)
 
-const initials = computed(() =>
-  props.action.name
-    .split(/[\s\-_]+/)
-    .map((w) => w[0] ?? '')
-    .join('')
-    .toUpperCase()
-    .slice(0, 2),
-)
+const initials = computed(() => getInitials(props.action.name))
 
 const isTerminal = (s: ActionStatus) => s === 'success' || s === 'error' || s === 'stopped'
 const isInFlight = computed(() => !isTerminal(localStatus.value) && localStatus.value !== 'idle')
@@ -55,7 +50,7 @@ async function trigger() {
     const state = await apiPost<ActionState>(API.actionTrigger(props.action.name))
     localStatus.value = state.taskStatus
     polling.value = true
-    pollTimer = setInterval(pollStatus, 3000)
+    pollTimer = setInterval(pollStatus, POLL_ACTION_STATUS_MS)
   } catch {
     localStatus.value = 'error'
     resetTimer = setTimeout(() => { localStatus.value = 'idle' }, 5000)

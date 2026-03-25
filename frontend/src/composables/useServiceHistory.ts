@@ -1,6 +1,5 @@
 import { ref, watch, type Ref } from 'vue'
-import { apiFetch } from '@/utils/api'
-import { API } from '@/utils/api'
+import { apiFetch, API } from '@/utils/api'
 import type { CheckRecord, DailySummary, HistoryResponse, UptimeResponse } from '@/types'
 
 export function useServiceHistory(

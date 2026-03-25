@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -53,6 +54,62 @@ func writeError(w http.ResponseWriter, code int, msg string) {
 	writeJSON(w, code, map[string]string{"error": msg})
 }
 
+// requireStore writes a 503 and returns false when storage is not configured.
+func (h *Handler) requireStore(w http.ResponseWriter) bool {
+	if h.store == nil {
+		writeError(w, http.StatusServiceUnavailable, "storage not configured")
+		return false
+	}
+	return true
+}
+
+// requireActions writes a 503 and returns false when actions are not configured.
+func (h *Handler) requireActions(w http.ResponseWriter) bool {
+	if h.actions == nil {
+		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+		return false
+	}
+	return true
+}
+
+// pathName extracts a named path parameter and writes a 400 if it is empty.
+func pathName(w http.ResponseWriter, r *http.Request, param string) (string, bool) {
+	name := r.PathValue(param)
+	if name == "" {
+		writeError(w, http.StatusBadRequest, param+" is required")
+		return "", false
+	}
+	return name, true
+}
+
+// queryDuration parses a duration query parameter, returning fallback when absent.
+func queryDuration(w http.ResponseWriter, r *http.Request, key string, fallback time.Duration) (time.Duration, bool) {
+	raw := r.URL.Query().Get(key)
+	if raw == "" {
+		return fallback, true
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid %s: %v", key, err))
+		return 0, false
+	}
+	return d, true
+}
+
+// queryInt parses a positive integer query parameter, returning fallback when absent.
+func queryInt(w http.ResponseWriter, r *http.Request, key string, fallback int) (int, bool) {
+	raw := r.URL.Query().Get(key)
+	if raw == "" {
+		return fallback, true
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil || v <= 0 {
+		writeError(w, http.StatusBadRequest, key+" must be a positive integer")
+		return 0, false
+	}
+	return v, true
+}
+
 // Health is a simple liveness probe for the backend itself.
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -97,20 +154,20 @@ func (h *Handler) GetOllamaModels(w http.ResponseWriter, r *http.Request) {
 
 	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, h.cfg.Ollama.URL+ollamaTagsPath, nil)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "invalid Ollama URL: "+err.Error())
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("invalid Ollama URL: %v", err))
 		return
 	}
 
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
-		writeError(w, http.StatusBadGateway, "cannot reach Ollama: "+err.Error())
+		writeError(w, http.StatusBadGateway, fmt.Sprintf("cannot reach Ollama: %v", err))
 		return
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxOllamaResponseBody))
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "read error: "+err.Error())
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("read error: %v", err))
 		return
 	}
 
@@ -122,30 +179,21 @@ func (h *Handler) GetOllamaModels(w http.ResponseWriter, r *http.Request) {
 // GetServiceHistory returns raw recent check records for a single service.
 // Query params: period (duration string, default "24h")
 func (h *Handler) GetServiceHistory(w http.ResponseWriter, r *http.Request) {
-	if h.store == nil {
-		writeError(w, http.StatusServiceUnavailable, "storage not configured")
+	if !h.requireStore(w) {
 		return
 	}
-
-	name := r.PathValue("name")
-	if name == "" {
-		writeError(w, http.StatusBadRequest, "service name is required")
+	name, ok := pathName(w, r, "name")
+	if !ok {
 		return
 	}
-
-	period := 24 * time.Hour
-	if p := r.URL.Query().Get("period"); p != "" {
-		parsed, err := time.ParseDuration(p)
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid period: "+err.Error())
-			return
-		}
-		period = parsed
+	period, ok := queryDuration(w, r, "period", 24*time.Hour)
+	if !ok {
+		return
 	}
 
 	records, err := h.store.GetRecentHistory(r.Context(), name, period)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to fetch history: "+err.Error())
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("failed to fetch history: %v", err))
 		return
 	}
 
@@ -159,25 +207,16 @@ func (h *Handler) GetServiceHistory(w http.ResponseWriter, r *http.Request) {
 // GetServiceUptime returns daily summaries for a single service.
 // Query params: days (int, default 30)
 func (h *Handler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {
-	if h.store == nil {
-		writeError(w, http.StatusServiceUnavailable, "storage not configured")
+	if !h.requireStore(w) {
 		return
 	}
-
-	name := r.PathValue("name")
-	if name == "" {
-		writeError(w, http.StatusBadRequest, "service name is required")
+	name, ok := pathName(w, r, "name")
+	if !ok {
 		return
 	}
-
-	days := 30
-	if d := r.URL.Query().Get("days"); d != "" {
-		parsed, err := strconv.Atoi(d)
-		if err != nil || parsed <= 0 {
-			writeError(w, http.StatusBadRequest, "days must be a positive integer")
-			return
-		}
-		days = parsed
+	days, ok := queryInt(w, r, "days", 30)
+	if !ok {
+		return
 	}
 
 	to := time.Now().UTC()
@@ -185,7 +224,7 @@ func (h *Handler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {
 
 	summaries, err := h.store.GetDailySummaries(r.Context(), name, from, to)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to fetch uptime: "+err.Error())
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("failed to fetch uptime: %v", err))
 		return
 	}
 
@@ -198,8 +237,7 @@ func (h *Handler) GetServiceUptime(w http.ResponseWriter, r *http.Request) {
 
 // GetActions returns the current state of all configured actions.
 func (h *Handler) GetActions(w http.ResponseWriter, r *http.Request) {
-	if h.actions == nil {
-		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+	if !h.requireActions(w) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -209,14 +247,11 @@ func (h *Handler) GetActions(w http.ResponseWriter, r *http.Request) {
 
 // TriggerAction fires a Semaphore task for the named action.
 func (h *Handler) TriggerAction(w http.ResponseWriter, r *http.Request) {
-	if h.actions == nil {
-		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+	if !h.requireActions(w) {
 		return
 	}
-
-	name := r.PathValue("name")
-	if name == "" {
-		writeError(w, http.StatusBadRequest, "action name is required")
+	name, ok := pathName(w, r, "name")
+	if !ok {
 		return
 	}
 
@@ -231,14 +266,11 @@ func (h *Handler) TriggerAction(w http.ResponseWriter, r *http.Request) {
 
 // GetActionStatus returns the current status of a specific action.
 func (h *Handler) GetActionStatus(w http.ResponseWriter, r *http.Request) {
-	if h.actions == nil {
-		writeError(w, http.StatusServiceUnavailable, "actions not configured")
+	if !h.requireActions(w) {
 		return
 	}
-
-	name := r.PathValue("name")
-	if name == "" {
-		writeError(w, http.StatusBadRequest, "action name is required")
+	name, ok := pathName(w, r, "name")
+	if !ok {
 		return
 	}
 

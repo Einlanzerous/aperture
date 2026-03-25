@@ -52,7 +52,8 @@ type ServiceConfig struct {
 	Href          string      `yaml:"href,omitempty"`
 	Size          string      `yaml:"size,omitempty"`           // s | m | l
 	DetailDefault bool        `yaml:"detail_default,omitempty"` // show detailed history view by default
-	SkipVerify    bool        `yaml:"skip_verify,omitempty"`    // skip TLS certificate verification
+	SkipVerify      bool        `yaml:"skip_verify,omitempty"`       // skip TLS certificate verification
+	CheckConnectionOnly bool    `yaml:"check_connection_only,omitempty"` // only verify TCP/TLS connectivity, not HTTP status
 }
 
 type OllamaConfig struct {

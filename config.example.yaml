@@ -46,8 +46,12 @@ docker_socket: "/var/run/docker.sock"
 #             Defaults to s if omitted.
 #
 # HTTP-specific fields:
-#   url       Full URL to GET. A 2xx response → healthy, 3xx → degraded,
-#             anything else or a timeout → unhealthy.
+#   url                    Full URL to GET. A 2xx response → healthy, 3xx → degraded,
+#                          anything else or a timeout → unhealthy.
+#   skip_verify            Skip TLS certificate verification (for self-signed certs).
+#   check_connection_only  Treat any non-5xx HTTP response as healthy. Useful for
+#                          services that require authentication and have no
+#                          unauthenticated health endpoint (e.g. Sunshine).
 #
 # Docker-specific fields:
 #   container Name or ID of the container to inspect via the Docker socket.
@@ -142,6 +146,15 @@ services:
     href: "http://your-server:3030"
     category: "Dev"
     size: s
+
+  # ── Gaming ──────────────────────────────────────────────────────────────────
+  - name: "Sunshine"
+    type: http
+    url: "https://localhost:47990"
+    category: "Gaming"
+    size: s
+    skip_verify: true              # self-signed certificate
+    check_connection_only: true    # requires auth, no health endpoint
 
   # ── Infrastructure — Docker socket checks ─────────────────────────────────────
   # These services have no directly accessible HTTP port, so we check their

@@ -1,6 +1,5 @@
 import { ref } from 'vue'
-import { apiFetch } from '@/utils/api'
-import { API } from '@/utils/api'
+import { apiFetch, API } from '@/utils/api'
 import { getErrorMessage } from '@/utils/format'
 import type { DashboardConfig } from '@/types'
 
