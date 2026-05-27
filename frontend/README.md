@@ -4,14 +4,13 @@ Vue 3 + TypeScript single-page application. Polls the backend API and renders a 
 
 ## Requirements
 
-- Node 20 or later
-- npm 10 or later
+- Bun 1.3 or later
 
 ## Development
 
 ```bash
-npm install
-npm run dev        # starts Vite dev server on http://localhost:4000
+bun install
+bun run dev        # starts Vite dev server on http://localhost:4000
 ```
 
 The Vite dev server proxies all `/api/*` requests to `http://localhost:8888`, so the backend must be running separately. See [`backend/README.md`](../backend/README.md).
@@ -19,8 +18,8 @@ The Vite dev server proxies all `/api/*` requests to `http://localhost:8888`, so
 ## Building for production
 
 ```bash
-npm run build      # outputs to dist/
-npm run preview    # preview the production build locally
+bun run build      # outputs to dist/
+bun run preview    # preview the production build locally
 ```
 
 ## Tech stack

@@ -52,10 +52,10 @@ cd backend
 go mod download
 go run ./cmd/server ../config.yaml
 
-# Frontend (separate terminal, requires Node 24+)
+# Frontend (separate terminal, requires Bun 1.3+)
 cd frontend
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 See [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md) for full development guides.
