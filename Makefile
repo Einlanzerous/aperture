@@ -6,7 +6,7 @@ dev-backend:
 	cd backend && go run ./cmd/server ../config.yaml
 
 dev-frontend:
-	cd frontend && npm run dev
+	cd frontend && bun run dev
 
 # Run both in parallel (requires a POSIX shell with job control or tmux/foreman).
 dev:
@@ -16,7 +16,7 @@ dev:
 
 build:
 	cd backend  && CGO_ENABLED=0 go build -ldflags="-s -w" -o ../dist/aperture ./cmd/server
-	cd frontend && npm run build
+	cd frontend && bun run build
 
 # ── Docker ────────────────────────────────────────────────────────────────────
 
