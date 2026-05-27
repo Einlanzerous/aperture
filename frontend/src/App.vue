@@ -11,6 +11,7 @@ import { useConfig }     from '@/composables/useConfig'
 import { useServices }   from '@/composables/useServices'
 import { useActions }    from '@/composables/useActions'
 import { useDetailMode } from '@/composables/useDetailMode'
+import { useLayout }     from '@/composables/useLayout'
 
 // ─── Dashboard config (fetched once on mount) ─────────────────────────────────
 
@@ -89,6 +90,12 @@ const widgets = computed<Widget[]>(() => {
   return list
 })
 
+// ─── Layout (persisted order + size overrides) ───────────────────────────────
+
+const dashboardTitle = computed(() => config.value.title)
+const { applyLayout } = useLayout(dashboardTitle)
+const orderedWidgets = computed(() => applyLayout(widgets.value))
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmtTime(d: Date | null): string {
@@ -145,7 +152,7 @@ function fmtTime(d: Date | null): string {
           <SkeletonCard :count="6" />
         </template>
 
-        <template v-for="w in widgets" :key="w.id">
+        <template v-for="w in orderedWidgets" :key="w.id">
           <div :class="widgetSizeClass(w.size)">
             <component :is="w.component" v-bind="w.props" />
           </div>
