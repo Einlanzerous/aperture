@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/Einlanzerous/aperture/compare/v1.7.0...v1.8.0) (2026-05-27)
+
+
+### Features
+
+* **frontend:** migrate toolchain from npm to bun (APTR-45) ([355b881](https://github.com/Einlanzerous/aperture/commit/355b881664e549b34a21cfa2e6dc617257a3118b))
+* **frontend:** migrate toolchain from npm to bun (APTR-45) ([c2026ce](https://github.com/Einlanzerous/aperture/commit/c2026ce28050b84da2cf0c9c5fc581a8adf0f6ae))
+
 ## [1.7.0](https://github.com/Einlanzerous/aperture/compare/v1.6.0...v1.7.0) (2026-03-25)
 
 
