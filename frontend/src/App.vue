@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, type Component } from 'vue'
 import DashboardGrid, { widgetSizeClass } from '@/components/layout/DashboardGrid.vue'
 import ServiceWidget  from '@/components/widgets/ServiceWidget.vue'
 import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
 import ResourceWidget from '@/components/widgets/ResourceWidget.vue'
 import SkeletonCard   from '@/components/ui/SkeletonCard.vue'
+import type { WidgetSize } from '@/types'
 import { useConfig }     from '@/composables/useConfig'
 import { useServices }   from '@/composables/useServices'
 import { useActions }    from '@/composables/useActions'
@@ -28,6 +29,65 @@ const { actions } = useActions(serviceInterval)
 // ─── Detail mode toggle ─────────────────────────────────────────────────────
 
 const { isDetailMode, toggleGlobal } = useDetailMode()
+
+// ─── Widget registry ─────────────────────────────────────────────────────────
+
+type WidgetKind = 'resource' | 'service' | 'action' | 'ollama'
+
+interface Widget {
+  id:        string
+  kind:      WidgetKind
+  size:      WidgetSize
+  component: Component
+  props:     Record<string, unknown>
+}
+
+const widgets = computed<Widget[]>(() => {
+  const list: Widget[] = []
+
+  if (config.value.systemEnabled) {
+    list.push({
+      id:        'system',
+      kind:      'resource',
+      size:      'l',
+      component: ResourceWidget,
+      props:     {},
+    })
+  }
+
+  for (const service of services.value) {
+    const size = service.size ?? 's'
+    list.push({
+      id:        `service:${service.name}`,
+      kind:      'service',
+      size,
+      component: ServiceWidget,
+      props:     { service, size, storageEnabled: config.value.storageEnabled },
+    })
+  }
+
+  for (const action of actions.value) {
+    list.push({
+      id:        `action:${action.name}`,
+      kind:      'action',
+      size:      action.size ?? 's',
+      component: ActionWidget,
+      props:     { action },
+    })
+  }
+
+  if (config.value.ollamaEnabled) {
+    list.push({
+      id:        'ollama',
+      kind:      'ollama',
+      size:      'm',
+      component: OllamaWidget,
+      props:     {},
+    })
+  }
+
+  return list
+})
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -80,37 +140,20 @@ function fmtTime(d: Date | null): string {
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
       <DashboardGrid>
 
-        <!-- System Resources — full width if enabled -->
-        <div v-if="config.systemEnabled" :class="widgetSizeClass('l')">
-          <ResourceWidget />
-        </div>
-
-        <!-- Service skeletons while loading -->
-        <template v-if="loading">
+        <!-- Service skeletons while loading (rendered at top when no system widget precedes) -->
+        <template v-if="loading && !config.systemEnabled">
           <SkeletonCard :count="6" />
         </template>
 
-        <div
-          v-for="service in services"
-          :key="service.name"
-          :class="widgetSizeClass(service.size ?? 's')"
-        >
-          <ServiceWidget :service="service" :size="service.size ?? 's'" :storage-enabled="config.storageEnabled" />
-        </div>
-
-        <!-- Action widgets -->
-        <div
-          v-for="action in actions"
-          :key="`action-${action.name}`"
-          :class="widgetSizeClass(action.size ?? 's')"
-        >
-          <ActionWidget :action="action" />
-        </div>
-
-        <!-- Ollama widget — medium width if enabled -->
-        <div v-if="config.ollamaEnabled" :class="widgetSizeClass('m')">
-          <OllamaWidget />
-        </div>
+        <template v-for="w in widgets" :key="w.id">
+          <div :class="widgetSizeClass(w.size)">
+            <component :is="w.component" v-bind="w.props" />
+          </div>
+          <!-- Skeleton bridges system → services while loading -->
+          <template v-if="loading && w.kind === 'resource'">
+            <SkeletonCard :count="6" />
+          </template>
+        </template>
 
       </DashboardGrid>
     </main>
