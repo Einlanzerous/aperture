@@ -21,13 +21,13 @@ const SIZE_CLASS: Record<WidgetSize, string> = {
 }
 
 // ─── Drag state ─────────────────────────────────────────────────────────────
-// The source tile stays at its original DOM position throughout the drag —
-// only its opacity changes. The projected landing slot is rendered as a
-// separate "extra cell" in the grid, which causes neighbouring tiles to
-// reflow naturally around it. Keeping the source DOM intact preserves the
-// browser's native drag image (snapshot of the source follows the cursor)
-// AND keeps its `@dragend` listener bound, so we don't get stuck state when
-// the drop fires outside the window.
+// While dragging, the source tile is `display: none` so it stops occupying a
+// grid cell — the other tiles flow into the gap. A "ghost" cell renders the
+// same widget at the projected landing slot with reduced opacity, so the user
+// sees exactly one preview of the card at the position where it will drop.
+// Keeping the source element in the DOM tree (just hidden) preserves the
+// browser's drag image (captured at dragstart, before the class applies) and
+// keeps its `@dragend` listener bound for cleanup.
 
 const dragId         = ref<string | null>(null)
 const projectedIndex = ref<number | null>(null)
@@ -36,24 +36,18 @@ const sourceIndex = computed<number>(() =>
   dragId.value ? props.items.findIndex((i) => i.id === dragId.value) : -1,
 )
 
-const draggedSize = computed<WidgetSize>(() => {
-  if (!dragId.value) return 's'
-  return props.items.find((i) => i.id === dragId.value)?.size ?? 's'
+const draggedItem = computed<T | null>(() => {
+  if (!dragId.value) return null
+  return props.items.find((i) => i.id === dragId.value) ?? null
 })
+
+const draggedSize = computed<WidgetSize>(
+  () => draggedItem.value?.size ?? 's',
+)
 
 const isActive = computed(
   () => dragId.value !== null && projectedIndex.value !== null,
 )
-
-// A projection that lands the source at its current slot (its own index, or
-// the slot immediately after — same thing visually) is a no-op drop. We hide
-// the placeholder in that case so the user sees a clean "return to start"
-// state rather than a redundant outline next to the dimmed source.
-const isNoopProjection = computed(() => {
-  if (projectedIndex.value === null || sourceIndex.value < 0) return false
-  return projectedIndex.value === sourceIndex.value
-      || projectedIndex.value === sourceIndex.value + 1
-})
 
 function reset(): void {
   dragId.value         = null
@@ -67,8 +61,8 @@ function commitDrop(): void {
   reset()
   if (!sourceId || target === null || fromIdx < 0) return
 
-  // target is an index in the N+1 cell layout (source + placeholder both in).
-  // Translate to the without-source insert index.
+  // projectedIndex is the slot in the original items array where the ghost
+  // sits — translate it to the insert index after removing the source.
   const insertIdx = target > fromIdx ? target - 1 : target
   if (insertIdx === fromIdx) return  // no-op drop
 
@@ -129,6 +123,10 @@ function rowBoundsOf(
 
 function onDragStart(e: DragEvent, id: string): void {
   dragId.value = id
+  // Seed projection at source slot so the ghost appears immediately on
+  // pick-up — otherwise the source vanishes (display:none) with nothing to
+  // replace it until the cursor moves over a neighbour.
+  projectedIndex.value = props.items.findIndex((i) => i.id === id)
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', id)
@@ -256,22 +254,24 @@ function endTouch(): void {
     <slot name="before" />
 
     <template v-for="(item, index) in items" :key="item.id">
-      <!-- Dashed placeholder cell at the projected landing slot. -->
+      <!-- Ghost preview of the dragged card at its projected landing slot. -->
       <div
-        v-if="isActive && projectedIndex === index && !isNoopProjection"
+        v-if="isActive && projectedIndex === index && draggedItem"
         :class="[
           SIZE_CLASS[draggedSize],
-          'pointer-events-none min-h-24 rounded-xl border-2 border-dashed border-gray-600 bg-gray-900/40',
+          'pointer-events-none opacity-30',
         ]"
         aria-hidden="true"
-      />
+      >
+        <slot :item="draggedItem" :index="sourceIndex" />
+      </div>
 
       <div
         :data-grid-item-id="item.id"
         :class="[
           SIZE_CLASS[item.size ?? 's'],
-          'group relative transition-opacity',
-          dragId === item.id ? 'opacity-30' : '',
+          'group relative',
+          dragId === item.id ? 'hidden' : '',
         ]"
         :style="touchActive ? { touchAction: 'none' } : undefined"
         draggable="true"
@@ -285,7 +285,6 @@ function endTouch(): void {
         @pointercancel="onPointerCancelBeforePress"
       >
         <span
-          v-if="dragId !== item.id"
           class="pointer-events-none absolute left-1 top-1 z-10 text-gray-400
                  opacity-0 transition-opacity group-hover:opacity-100"
           aria-hidden="true"
@@ -307,14 +306,16 @@ function endTouch(): void {
       <slot name="after-item" :item="item" :index="index" />
     </template>
 
-    <!-- Trailing placeholder when dropping after the last tile. -->
+    <!-- Trailing ghost when dropping after the last tile. -->
     <div
-      v-if="isActive && projectedIndex === items.length && !isNoopProjection"
+      v-if="isActive && projectedIndex === items.length && draggedItem"
       :class="[
         SIZE_CLASS[draggedSize],
-        'pointer-events-none min-h-24 rounded-xl border-2 border-dashed border-gray-600 bg-gray-900/40',
+        'pointer-events-none opacity-30',
       ]"
       aria-hidden="true"
-    />
+    >
+      <slot :item="draggedItem" :index="sourceIndex" />
+    </div>
   </div>
 </template>
