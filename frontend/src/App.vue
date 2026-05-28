@@ -93,8 +93,13 @@ const widgets = computed<Widget[]>(() => {
 // ─── Layout (persisted order + size overrides) ───────────────────────────────
 
 const dashboardTitle = computed(() => config.value.title)
-const { applyLayout, setOrder } = useLayout(dashboardTitle)
+const { applyLayout, setOrder, reset: resetLayout, isCustomized } = useLayout(dashboardTitle)
 const orderedWidgets = computed(() => applyLayout(widgets.value))
+
+function onResetLayout(): void {
+  if (isCustomized.value && !window.confirm('Reset dashboard layout to defaults?')) return
+  resetLayout()
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -131,6 +136,17 @@ function fmtTime(d: Date | null): string {
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
+          </button>
+          <button
+            class="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1
+                   text-gray-300 transition-colors hover:border-gray-600 hover:bg-gray-700
+                   disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-700
+                   disabled:hover:bg-gray-800"
+            :disabled="!isCustomized"
+            :title="isCustomized ? 'Reset layout to defaults' : 'Layout is already at defaults'"
+            @click="onResetLayout"
+          >
+            Reset layout
           </button>
           <button
             class="rounded-md border border-gray-700 bg-gray-800 px-2.5 py-1
