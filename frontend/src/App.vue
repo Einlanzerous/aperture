@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, type Component } from 'vue'
-import DashboardGrid, { widgetSizeClass } from '@/components/layout/DashboardGrid.vue'
+import DraggableGrid from '@/components/layout/DraggableGrid.vue'
 import ServiceWidget  from '@/components/widgets/ServiceWidget.vue'
 import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
@@ -93,7 +93,7 @@ const widgets = computed<Widget[]>(() => {
 // ─── Layout (persisted order + size overrides) ───────────────────────────────
 
 const dashboardTitle = computed(() => config.value.title)
-const { applyLayout } = useLayout(dashboardTitle)
+const { applyLayout, setOrder } = useLayout(dashboardTitle)
 const orderedWidgets = computed(() => applyLayout(widgets.value))
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -145,24 +145,23 @@ function fmtTime(d: Date | null): string {
 
     <!-- Main content -->
     <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      <DashboardGrid>
+      <DraggableGrid :items="orderedWidgets" @reorder="setOrder">
 
         <!-- Service skeletons while loading (rendered at top when no system widget precedes) -->
-        <template v-if="loading && !config.systemEnabled">
+        <template v-if="loading && !config.systemEnabled" #before>
           <SkeletonCard :count="6" />
         </template>
 
-        <template v-for="w in orderedWidgets" :key="w.id">
-          <div :class="widgetSizeClass(w.size)">
-            <component :is="w.component" v-bind="w.props" />
-          </div>
-          <!-- Skeleton bridges system → services while loading -->
-          <template v-if="loading && w.kind === 'resource'">
-            <SkeletonCard :count="6" />
-          </template>
+        <template #default="{ item }">
+          <component :is="item.component" v-bind="item.props" />
         </template>
 
-      </DashboardGrid>
+        <!-- Skeleton bridges system → services while loading -->
+        <template #after-item="{ item }">
+          <SkeletonCard v-if="loading && item.kind === 'resource'" :count="6" />
+        </template>
+
+      </DraggableGrid>
     </main>
   </div>
 </template>

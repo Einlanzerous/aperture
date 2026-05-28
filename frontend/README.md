@@ -34,7 +34,7 @@ bun run preview    # preview the production build locally
 
 ## Widget system
 
-Widgets are standard Vue components placed inside `DashboardGrid`. Each widget occupies a number of grid columns determined by its `size` prop:
+Widgets are standard Vue components placed inside `DraggableGrid`. Each widget occupies a number of grid columns determined by its `size` prop:
 
 | Size | Columns | Width |
 |------|---------|-------|
@@ -48,7 +48,7 @@ On mobile all widgets collapse to full width regardless of size.
 
 1. Create `src/components/widgets/MyWidget.vue`.
 2. Add a composable in `src/composables/` if the widget needs its own polling logic.
-3. Import and render the widget in `App.vue` inside `<DashboardGrid>`, wrapping it in a `<div :class="widgetSizeClass('m')">`.
+3. Add the widget to the `widgets` array in `App.vue` with an `id`, `size`, `component`, and `props` — `DraggableGrid` handles column sizing and ordering.
 
 ### Existing widgets
 
@@ -78,7 +78,7 @@ frontend/
     │   └── useResources.ts  Polls /api/system/resources, exposes reactive state
     └── components/
         ├── layout/
-        │   └── DashboardGrid.vue   3-column CSS grid + widgetSizeClass export
+        │   └── DraggableGrid.vue   3-column CSS grid + native HTML5 drag-and-drop reordering
         └── widgets/
             ├── ServiceWidget.vue
             ├── ResourceWidget.vue
