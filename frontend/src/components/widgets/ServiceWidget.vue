@@ -81,17 +81,27 @@ function timeAgo(iso: string): string {
         </div>
       </div>
 
-      <span
-        class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5
-               text-xs font-medium"
-        :class="sc.badge"
-      >
+      <div class="flex shrink-0 flex-col items-end gap-1">
         <span
-          class="h-1.5 w-1.5 rounded-full"
-          :class="[sc.dot, sc.pulse ? 'animate-pulse' : '']"
-        />
-        {{ sc.label }}
-      </span>
+          class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5
+                 text-xs font-medium"
+          :class="sc.badge"
+        >
+          <span
+            class="h-1.5 w-1.5 rounded-full"
+            :class="[sc.dot, sc.pulse ? 'animate-pulse' : '']"
+          />
+          {{ sc.label }}
+        </span>
+
+        <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
+          <span v-if="service.responseTime" class="text-gray-400 tabular-nums">
+            {{ fmtMs(service.responseTime) }}
+          </span>
+          <span v-if="service.responseTime" aria-hidden="true">&middot;</span>
+          <span class="tabular-nums">{{ timeAgo(service.checkedAt) }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Uptime bar -->
@@ -105,50 +115,40 @@ function timeAgo(iso: string): string {
     />
 
     <!-- Footer row -->
-    <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-1.5">
-        <span
-          class="inline-flex items-center gap-1 rounded bg-gray-800 px-1.5 py-0.5
-                 text-xs text-gray-500 ring-1 ring-gray-700"
-        >
-          <template v-if="service.type === 'docker'">
-            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M13.98 11.08h2.12v-2.1h-2.12v2.1zm-2.85 0h2.12v-2.1h-2.12v2.1zm-2.84
-                0h2.12v-2.1H8.29v2.1zm-2.85 0h2.12v-2.1H5.44v2.1zm5.7-2.83h2.11V6.14h-2.11v2.11zm-2.85
-                0h2.12V6.14H8.29v2.11zM5.44 8.25h2.12V6.14H5.44v2.11zM2.58 11.08H4.7v-2.1H2.58v2.1z"/>
-              <path d="M23.27 11.27c-.47-.32-1.55-.44-2.4-.28a4.38 4.38 0 00-1.72-2.94l-.35-.23-.24.34c-.5.72-.64
-                1.92-.22 2.82-.34.2-.69.4-1.01.53-.49.19-.97.28-1.44.28H.54l-.05.3C.3 13.17.5 14.38 1.2 15.27c.66.84
-                1.66 1.47 2.9 1.78.63.16 1.29.24 1.96.24a10.3 10.3 0 004.58-1.1c.63-.3 1.18-.7 1.67-1.13a9.8 9.8 0
-                001.38-1.7h.37c1.06 0 1.96-.34 2.63-.99.35-.34.63-.74.82-1.2l.06-.18-.3-.22z"/>
-            </svg>
-            Docker
-          </template>
-          <template v-else>
-            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
-            </svg>
-            HTTP
-          </template>
-        </span>
+    <div class="flex items-center gap-1.5">
+      <span
+        class="inline-flex items-center gap-1 rounded bg-gray-800 px-1.5 py-0.5
+               text-xs text-gray-500 ring-1 ring-gray-700"
+      >
+        <template v-if="service.type === 'docker'">
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M13.98 11.08h2.12v-2.1h-2.12v2.1zm-2.85 0h2.12v-2.1h-2.12v2.1zm-2.84
+              0h2.12v-2.1H8.29v2.1zm-2.85 0h2.12v-2.1H5.44v2.1zm5.7-2.83h2.11V6.14h-2.11v2.11zm-2.85
+              0h2.12V6.14H8.29v2.11zM5.44 8.25h2.12V6.14H5.44v2.11zM2.58 11.08H4.7v-2.1H2.58v2.1z"/>
+            <path d="M23.27 11.27c-.47-.32-1.55-.44-2.4-.28a4.38 4.38 0 00-1.72-2.94l-.35-.23-.24.34c-.5.72-.64
+              1.92-.22 2.82-.34.2-.69.4-1.01.53-.49.19-.97.28-1.44.28H.54l-.05.3C.3 13.17.5 14.38 1.2 15.27c.66.84
+              1.66 1.47 2.9 1.78.63.16 1.29.24 1.96.24a10.3 10.3 0 004.58-1.1c.63-.3 1.18-.7 1.67-1.13a9.8 9.8 0
+              001.38-1.7h.37c1.06 0 1.96-.34 2.63-.99.35-.34.63-.74.82-1.2l.06-.18-.3-.22z"/>
+          </svg>
+          Docker
+        </template>
+        <template v-else>
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+          </svg>
+          HTTP
+        </template>
+      </span>
 
-        <span
-          v-if="service.category"
-          class="inline-flex items-center rounded bg-gray-800/60 px-1.5 py-0.5
-                 text-[10px] font-medium uppercase tracking-wider text-gray-500 ring-1 ring-gray-700/50"
-        >
-          {{ service.category }}
-        </span>
-      </div>
-
-      <div class="flex items-center gap-1.5 text-xs text-gray-500">
-        <span v-if="service.responseTime" class="text-gray-400 tabular-nums">
-          {{ fmtMs(service.responseTime) }}
-        </span>
-        <span v-if="service.responseTime" aria-hidden="true">&middot;</span>
-        <span class="tabular-nums">{{ timeAgo(service.checkedAt) }}</span>
-      </div>
+      <span
+        v-if="service.category"
+        class="inline-flex items-center rounded bg-gray-800/60 px-1.5 py-0.5
+               text-[10px] font-medium uppercase tracking-wider text-gray-500 ring-1 ring-gray-700/50"
+      >
+        {{ service.category }}
+      </span>
     </div>
 
     <!-- Error / message banner -->
