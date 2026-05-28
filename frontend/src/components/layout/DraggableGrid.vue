@@ -159,6 +159,23 @@ function onDrop(e: DragEvent): void {
   commitDrop()
 }
 
+// The placeholder cell is `pointer-events-none`, so when the user releases
+// over it the drop event lands on the grid container rather than a tile.
+// We catch it here so the drop still goes through commitDrop. Per-tile
+// drops bubble up too — the second commitDrop is a no-op because reset()
+// already cleared dragId.
+function onGridDragOver(e: DragEvent): void {
+  if (!dragId.value) return
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+}
+
+function onGridDrop(e: DragEvent): void {
+  if (!dragId.value) return
+  e.preventDefault()
+  commitDrop()
+}
+
 // Safety net: if a drop happens outside any tile (window edge, blank space),
 // dragend on the source still fires — but only if the source still owns the
 // listener. We bind globally too so a stale state can never linger.
@@ -231,7 +248,11 @@ function endTouch(): void {
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+  <div
+    class="grid grid-cols-1 gap-4 md:grid-cols-3"
+    @dragover="onGridDragOver"
+    @drop="onGridDrop"
+  >
     <slot name="before" />
 
     <template v-for="(item, index) in items" :key="item.id">
@@ -265,7 +286,7 @@ function endTouch(): void {
       >
         <span
           v-if="dragId !== item.id"
-          class="pointer-events-none absolute right-3 top-1/2 z-10 -translate-y-1/2 text-gray-500
+          class="pointer-events-none absolute left-1 top-1 z-10 text-gray-400
                  opacity-0 transition-opacity group-hover:opacity-100"
           aria-hidden="true"
           title="Drag to reorder"
