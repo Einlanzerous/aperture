@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.9.0](https://github.com/Einlanzerous/aperture/compare/v1.8.0...v1.9.0) (2026-05-28)
+
+
+### Features
+
+* **frontend:** draggable widget grid (APTR-10) ([b79ff21](https://github.com/Einlanzerous/aperture/commit/b79ff21e5b87eaa705e3872f2f8da12b137d21d3))
+* **frontend:** draggable widget grid with native HTML5 DnD (APTR-10) ([280edc8](https://github.com/Einlanzerous/aperture/commit/280edc8628c62abc4f58754748a317eead5e5fe5))
+* **frontend:** persist widget layout to localStorage (APTR-9) ([7a711b4](https://github.com/Einlanzerous/aperture/commit/7a711b4ec46d19d513dd82f3d18ae087992ea3f6))
+* **frontend:** persist widget layout to localStorage (APTR-9) ([8fcd70c](https://github.com/Einlanzerous/aperture/commit/8fcd70c4e6ea85f4d416982c00c391314bc9e80b))
+
+
+### Bug Fixes
+
+* **build:** install real nodejs in frontend Docker builder ([6885d3e](https://github.com/Einlanzerous/aperture/commit/6885d3e9f91545dc9dcd6122fc4ae6413a85e9fe))
+* **build:** use bun in Makefile and CI workflow ([36c889c](https://github.com/Einlanzerous/aperture/commit/36c889c44bd58810a3067a407ae096cadf80a8a2))
+* **frontend:** catch drop over placeholder + reposition grip icon ([acb4fbc](https://github.com/Einlanzerous/aperture/commit/acb4fbc0329db14861be9bf2311abca12b9e3437))
+* **frontend:** hide source + render ghost preview at projected slot ([0277c75](https://github.com/Einlanzerous/aperture/commit/0277c75d59546f84c2a23d13b95d11d58059964d))
+
 ## [1.8.0](https://github.com/Einlanzerous/aperture/compare/v1.7.0...v1.8.0) (2026-05-27)
 
 
