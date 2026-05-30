@@ -2,6 +2,7 @@
 import { computed, onMounted, type Component } from 'vue'
 import DraggableGrid from '@/components/layout/DraggableGrid.vue'
 import ServiceWidget  from '@/components/widgets/ServiceWidget.vue'
+import StatusStack    from '@/components/widgets/StatusStack.vue'
 import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
 import ResourceWidget from '@/components/widgets/ResourceWidget.vue'
@@ -56,7 +57,17 @@ const widgets = computed<Widget[]>(() => {
     })
   }
 
+  // Normal services render one-per-slot. Status-only services are collected and
+  // paired two-per-slot into a StatusStack, so a thin tile no longer eats a full
+  // S slot. The backend sorts services alphabetically, so status-only services
+  // arrive scattered — pairing them here keeps the stacks contiguous regardless.
+  const statusOnly: typeof services.value = []
+
   for (const service of services.value) {
+    if (service.statusOnly) {
+      statusOnly.push(service)
+      continue
+    }
     const size = service.size ?? 's'
     list.push({
       id:        `service:${service.name}`,
@@ -64,6 +75,17 @@ const widgets = computed<Widget[]>(() => {
       size,
       component: ServiceWidget,
       props:     { service, size, storageEnabled: config.value.storageEnabled },
+    })
+  }
+
+  for (let i = 0; i < statusOnly.length; i += 2) {
+    const pair = statusOnly.slice(i, i + 2)
+    list.push({
+      id:        `status-pair:${pair[0].name}`,
+      kind:      'service',
+      size:      's',
+      component: StatusStack,
+      props:     { services: pair },
     })
   }
 
