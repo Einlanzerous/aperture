@@ -52,6 +52,7 @@ type ServiceConfig struct {
 	Href          string      `yaml:"href,omitempty"`
 	Size          string      `yaml:"size,omitempty"`           // s | m | l
 	DetailDefault bool        `yaml:"detail_default,omitempty"` // show detailed history view by default
+	StatusOnly    bool        `yaml:"status_only,omitempty"`    // compact non-clickable tile for infra-only services
 	SkipVerify      bool        `yaml:"skip_verify,omitempty"`       // skip TLS certificate verification
 	CheckConnectionOnly bool    `yaml:"check_connection_only,omitempty"` // only verify TCP/TLS connectivity, not HTTP status
 }
