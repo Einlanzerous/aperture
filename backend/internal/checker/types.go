@@ -34,6 +34,7 @@ type ServiceStatus struct {
 	Href          string    `json:"href,omitempty"`
 	Size          string    `json:"size,omitempty"`
 	DetailDefault bool      `json:"detailDefault,omitempty"`
+	StatusOnly    bool      `json:"statusOnly,omitempty"`
 }
 
 // newServiceStatus creates a ServiceStatus pre-populated from config fields.
@@ -48,6 +49,7 @@ func newServiceStatus(svc config.ServiceConfig) *ServiceStatus {
 		Href:          svc.Href,
 		Size:          svc.Size,
 		DetailDefault: svc.DetailDefault,
+		StatusOnly:    svc.StatusOnly,
 		CheckedAt:     time.Now(),
 	}
 }
