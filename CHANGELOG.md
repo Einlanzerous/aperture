@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.0](https://github.com/Einlanzerous/aperture/compare/v1.10.0...v1.11.0) (2026-05-30)
+
+
+### Features
+
+* **frontend:** stack status-only tiles two-per-slot (APTR-14) ([9d80ba1](https://github.com/Einlanzerous/aperture/commit/9d80ba1952f11b24528642c45765cb3cb4f6ea59))
+* **frontend:** stack status-only tiles two-per-slot (APTR-14) ([1addde6](https://github.com/Einlanzerous/aperture/commit/1addde6cc488e793fb0662f253609d72cacebed0))
+
 ## [1.10.0](https://github.com/Einlanzerous/aperture/compare/v1.9.0...v1.10.0) (2026-05-30)
 
 
