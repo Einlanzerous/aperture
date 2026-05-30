@@ -21,6 +21,7 @@ export interface ServiceStatusData {
   href?:        string
   size?:        WidgetSize
   detailDefault?: boolean
+  statusOnly?:  boolean
 }
 
 export interface ServicesResponse {
