@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.10.0](https://github.com/Einlanzerous/aperture/compare/v1.9.0...v1.10.0) (2026-05-30)
+
+
+### Features
+
+* **backend:** add status_only flag to service config (APTR-13) ([1ec1bce](https://github.com/Einlanzerous/aperture/commit/1ec1bce09b5488f0ab1832b768d735435792a42d))
+* **backend:** add status_only flag to service config (APTR-13) ([db24a29](https://github.com/Einlanzerous/aperture/commit/db24a295e228343c84a36cfd17eff6f938a7e7e7))
+* **frontend:** reset layout button + docs (APTR-12) ([85c12b7](https://github.com/Einlanzerous/aperture/commit/85c12b748a98a39035a3906f38fb43528ae0220f))
+* **frontend:** reset layout button + docs (APTR-12) ([3ba6344](https://github.com/Einlanzerous/aperture/commit/3ba6344307e47ffb75c172239a0e47f8cc34323e))
+* **frontend:** StatusTile compact variant (APTR-14) ([26f9fe6](https://github.com/Einlanzerous/aperture/commit/26f9fe6ad9187b179561c0120a24464e8004115f))
+* **frontend:** StatusTile compact variant for status-only services (APTR-14) ([e489bea](https://github.com/Einlanzerous/aperture/commit/e489beaf3845c3749f1cfb63549cd1323d2b17ae))
+
 ## [1.9.0](https://github.com/Einlanzerous/aperture/compare/v1.8.0...v1.9.0) (2026-05-28)
 
 
