@@ -97,13 +97,13 @@ system:
 | `check_interval` | int      | Seconds between each full round of health checks     |
 | `services[].type`| string   | `http` performs a GET request; `docker` inspects the socket |
 | `services[].size`| string   | Grid column span: `s` = 1/3, `m` = 2/3, `l` = full  |
-| `services[].status_only` | bool | Render a compact, non-clickable tile (status dot + name + category only). For infrastructure with no user-facing UI |
+| `services[].status_only` | bool | Render a compact, non-clickable tile (name + category + status badge). Tiles pair up two-per-slot. For infrastructure with no user-facing UI |
 | `services[].skip_verify` | bool | Skip TLS certificate verification (self-signed certs) |
 | `services[].check_connection_only` | bool | Treat any non-5xx HTTP response as healthy. Useful for services that require authentication and have no unauthenticated health endpoint |
 
 ### Status-only tiles
 
-Some services exist only to support the rest of your stack — Traefik, Postgres, Watchtower — and have no UI worth opening from the dashboard. Mark them with `status_only: true` to render a compact tile that shows just the status dot, name, and category. The tile isn't a link, doesn't show uptime history, and stays out of the way unless the service goes unhealthy (at which point the error message surfaces).
+Some services exist only to support the rest of your stack — Traefik, Postgres, Watchtower — and have no UI worth opening from the dashboard. Mark them with `status_only: true` to render a compact tile that shows the name, category, and a status badge. The tile isn't a link, doesn't show uptime history, and stays out of the way unless the service goes unhealthy (at which point the error message surfaces). To avoid wasting space, status-only tiles pair up two-per-slot — two thin tiles stack vertically in the footprint of one normal card.
 
 ```yaml
 services:

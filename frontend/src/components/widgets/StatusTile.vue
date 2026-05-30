@@ -30,11 +30,6 @@ const tooltip = computed(() => `Last checked ${timeAgo(props.service.checkedAt)}
     :title="tooltip"
   >
     <div class="flex h-16 items-center gap-3 px-4">
-      <span
-        class="h-2 w-2 shrink-0 rounded-full"
-        :class="[sc.dot, sc.pulse ? 'animate-pulse' : '']"
-        :aria-label="sc.label"
-      />
       <p class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-100">
         {{ service.name }}
       </p>
@@ -45,6 +40,17 @@ const tooltip = computed(() => `Last checked ${timeAgo(props.service.checkedAt)}
                ring-1 ring-gray-700/50"
       >
         {{ service.category }}
+      </span>
+      <span
+        class="shrink-0 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5
+               text-xs font-medium"
+        :class="sc.badge"
+      >
+        <span
+          class="h-1.5 w-1.5 rounded-full"
+          :class="[sc.dot, sc.pulse ? 'animate-pulse' : '']"
+        />
+        {{ sc.label }}
       </span>
     </div>
 
