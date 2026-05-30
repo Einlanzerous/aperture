@@ -44,6 +44,14 @@ Widgets are standard Vue components placed inside `DraggableGrid`. Each widget o
 
 On mobile all widgets collapse to full width regardless of size.
 
+### Layout
+
+Widgets can be rearranged at runtime — drag any card by its grip handle and drop it onto the slot where you want it to land. While dragging, the original tile is hidden from the grid and a translucent preview renders at the projected drop position.
+
+Per-widget size overrides live alongside the order in the same store, so a widget configured as `s` in `config.yaml` can be promoted to `m` or `l` from the UI without touching the config file.
+
+Layout state is **browser-local**: it persists in `localStorage` under the `aperture:layout:<dashboard-title>` key and is **not synced across browsers, devices, or profiles**. Clearing site data resets the layout to whatever `config.yaml` defines. The header's **Reset layout** button clears the override for the current dashboard in one click (with a confirm prompt when the layout has actually been customized).
+
 ### Adding a new widget
 
 1. Create `src/components/widgets/MyWidget.vue`.

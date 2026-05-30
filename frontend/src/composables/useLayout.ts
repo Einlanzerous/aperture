@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 import type { WidgetSize } from '@/types'
 
 const STORAGE_VERSION = 1
@@ -96,7 +96,7 @@ export function useLayout(title: Ref<string>) {
     persist()
   }
 
-  function resetLayout(): void {
+  function reset(): void {
     entries.value = {}
     try {
       localStorage.removeItem(storageKey(title.value))
@@ -105,5 +105,7 @@ export function useLayout(title: Ref<string>) {
     }
   }
 
-  return { applyLayout, setOrder, setSizeOverride, resetLayout }
+  const isCustomized = computed(() => Object.keys(entries.value).length > 0)
+
+  return { applyLayout, setOrder, setSizeOverride, reset, isCustomized }
 }
