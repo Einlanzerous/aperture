@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.0](https://github.com/Einlanzerous/aperture/compare/v1.11.0...v1.12.0) (2026-05-31)
+
+
+### Features
+
+* split system resources into per-metric widgets with history + GPU (APTR-3) ([8c878b9](https://github.com/Einlanzerous/aperture/commit/8c878b9d997b2707b84b8a478ec6a3befea4917c))
+* split system resources into per-metric widgets with history + GPU (APTR-3) ([932a2aa](https://github.com/Einlanzerous/aperture/commit/932a2aa1cac4633b8573df5a1d4fed87d6c76fe2))
+
 ## [1.11.0](https://github.com/Einlanzerous/aperture/compare/v1.10.0...v1.11.0) (2026-05-30)
 
 
