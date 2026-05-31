@@ -17,7 +17,7 @@ const emit = defineEmits<{
 // Slot-based footprint → column + row span. The grid uses fixed-height rows
 // (auto-rows-[SLOT]) so every widget is an exact multiple of one slot in BOTH
 // dimensions and tiles with no holes (grid-flow-row-dense backfills gaps):
-//   tiny = 1×1   small = 1×2   large = 2×2   xl = 3×2   ollama = 3×4
+//   tiny = 1×1   small = 1×2   large = 2×2   xl = 3×2   ollama = 2×3
 // One slot is a tiny tile; a small widget is two slots tall, so two tinies
 // stacked equal one small (the row gap math works out via gap-4).
 const SIZE_CLASS: Record<WidgetSize, string> = {
@@ -25,11 +25,11 @@ const SIZE_CLASS: Record<WidgetSize, string> = {
   small:  'col-span-1 row-span-2',
   large:  'col-span-1 row-span-2 md:col-span-2',
   xl:     'col-span-1 row-span-2 md:col-span-3',
-  ollama: 'col-span-1 row-span-4 md:col-span-3',
+  ollama: 'col-span-1 row-span-3 md:col-span-2',
 }
 
 // Full-width sizes snap to whole rows while dragging (no left/right half).
-const FULL_WIDTH_SIZES = new Set<WidgetSize>(['xl', 'ollama'])
+const FULL_WIDTH_SIZES = new Set<WidgetSize>(['xl'])
 
 // ─── Drag state ─────────────────────────────────────────────────────────────
 // While dragging, the source tile is `display: none` so it stops occupying a
