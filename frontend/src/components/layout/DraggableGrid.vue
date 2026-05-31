@@ -39,6 +39,22 @@ const SIZE_CLASS: Record<WidgetSize, string> = {
 const dragId         = ref<string | null>(null)
 const projectedIndex = ref<number | null>(null)
 
+// Last pointer position a projection was computed at. Inserting the ghost
+// reflows the grid, which fires fresh `dragover` events on whatever tile slides
+// under a *stationary* cursor — re-projecting at the same point and flipping the
+// ghost back and forth forever. Ignoring events that haven't moved past this
+// threshold breaks that feedback loop (real pointer motion always re-projects).
+const PROJECT_MOVE_THRESHOLD = 6
+let lastProjectX = -1
+let lastProjectY = -1
+
+function pointerMovedEnough(x: number, y: number): boolean {
+  return (
+    Math.abs(x - lastProjectX) >= PROJECT_MOVE_THRESHOLD ||
+    Math.abs(y - lastProjectY) >= PROJECT_MOVE_THRESHOLD
+  )
+}
+
 const sourceIndex = computed<number>(() =>
   dragId.value ? props.items.findIndex((i) => i.id === dragId.value) : -1,
 )
@@ -59,6 +75,8 @@ const isActive = computed(
 function reset(): void {
   dragId.value         = null
   projectedIndex.value = null
+  lastProjectX         = -1
+  lastProjectY         = -1
 }
 
 function commitDrop(): void {
@@ -151,6 +169,12 @@ function onDragOver(e: DragEvent, id: string): void {
     projectedIndex.value = sourceIndex.value
     return
   }
+  // Skip reflow-triggered events at a stationary pointer (see threshold note).
+  if (projectedIndex.value !== null && !pointerMovedEnough(e.clientX, e.clientY)) {
+    return
+  }
+  lastProjectX = e.clientX
+  lastProjectY = e.clientY
   projectedIndex.value = projectFromPointer(
     id,
     e.currentTarget as HTMLElement,
@@ -224,12 +248,17 @@ function onPointerCancelBeforePress(): void {
 function onTouchMove(e: PointerEvent): void {
   if (!touchActive) return
   e.preventDefault()
+  if (projectedIndex.value !== null && !pointerMovedEnough(e.clientX, e.clientY)) {
+    return
+  }
   const el = document
     .elementFromPoint(e.clientX, e.clientY)
     ?.closest<HTMLElement>('[data-grid-item-id]')
   if (!el) return
   const id = el.dataset.gridItemId
   if (!id || id === dragId.value) return
+  lastProjectX = e.clientX
+  lastProjectY = e.clientY
   projectedIndex.value = projectFromPointer(id, el, e.clientX, e.clientY)
 }
 
