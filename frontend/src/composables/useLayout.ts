@@ -1,7 +1,10 @@
 import { computed, ref, watch, type Ref } from 'vue'
 import type { WidgetSize } from '@/types'
 
-const STORAGE_VERSION = 1
+// v2: APTR-47 reworked widget ids (tiny tiles now pack into TinyStack wrappers)
+// and the size vocabulary (slot-based tiny/small/large/xl), so stale v1 entries
+// are dropped rather than migrated.
+const STORAGE_VERSION = 2
 const STORAGE_PREFIX  = 'aperture:layout:'
 
 interface LayoutEntry {

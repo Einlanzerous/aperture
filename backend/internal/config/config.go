@@ -59,6 +59,10 @@ type ServiceConfig struct {
 
 type OllamaConfig struct {
 	URL string `yaml:"url"`
+	// HiddenModels filters models out of the Ollama widget before display. Each
+	// entry is an exact model name or a simple glob where '*' matches any run of
+	// characters (e.g. "hf.co/*" to drop imported Hugging Face mirrors).
+	HiddenModels []string `yaml:"hidden_models,omitempty"`
 }
 
 // MetricConfig toggles a single system metric (cpu, memory, load, or gpu).

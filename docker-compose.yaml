@@ -8,6 +8,18 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Optional AMD GPU monitoring — mount the host ROCm tree so amd-smi is
+      # available to the GPU adapter (read-only):
+      # - /opt/rocm:/opt/rocm:ro
+    # Optional AMD GPU monitoring — pass through the GPU device nodes and add the
+    # render/video groups. group_add GIDs are host-specific; find them with
+    # `getent group render video` and combine with the /opt/rocm volume above.
+    # devices:
+    #   - /dev/kfd
+    #   - /dev/dri
+    # group_add:
+    #   - "44"    # video  (adjust to your host)
+    #   - "993"   # render (adjust to your host)
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/api/health"]
       interval: 10s

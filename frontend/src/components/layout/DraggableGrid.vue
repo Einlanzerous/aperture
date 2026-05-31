@@ -14,10 +14,16 @@ const emit = defineEmits<{
   reorder: [orderedIds: string[]]
 }>()
 
+// Slot-based footprint → column span. One slot is a single tiny tile; a full
+// grid cell is two slots tall, so tiny tiles are packed two-per-cell upstream
+// (TinyStack) and reach the grid as a `small` wrapper. Heights are content-
+// driven; only the column span varies here.
+//   tiny / small → 1 column   large → 2 columns   xl → 3 columns (full width)
 const SIZE_CLASS: Record<WidgetSize, string> = {
-  s: 'col-span-1',
-  m: 'col-span-1 md:col-span-2',
-  l: 'col-span-1 md:col-span-3',
+  tiny:  'col-span-1',
+  small: 'col-span-1',
+  large: 'col-span-1 md:col-span-2',
+  xl:    'col-span-1 md:col-span-3',
 }
 
 // ─── Drag state ─────────────────────────────────────────────────────────────
@@ -42,7 +48,7 @@ const draggedItem = computed<T | null>(() => {
 })
 
 const draggedSize = computed<WidgetSize>(
-  () => draggedItem.value?.size ?? 's',
+  () => draggedItem.value?.size ?? 'small',
 )
 
 const isActive = computed(
@@ -89,7 +95,7 @@ function projectFromPointer(
 
   const rect = hoveredEl.getBoundingClientRect()
 
-  if (draggedSize.value === 'l') {
+  if (draggedSize.value === 'xl') {
     const bounds = rowBoundsOf(hoveredEl)
     if (!bounds) return idx
     const before = clientY < rect.top + rect.height / 2
@@ -269,7 +275,7 @@ function endTouch(): void {
       <div
         :data-grid-item-id="item.id"
         :class="[
-          SIZE_CLASS[item.size ?? 's'],
+          SIZE_CLASS[item.size ?? 'small'],
           'group relative',
           dragId === item.id ? 'hidden' : '',
         ]"

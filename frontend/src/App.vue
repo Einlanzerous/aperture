@@ -2,7 +2,8 @@
 import { computed, onMounted, type Component } from 'vue'
 import DraggableGrid from '@/components/layout/DraggableGrid.vue'
 import ServiceWidget  from '@/components/widgets/ServiceWidget.vue'
-import StatusStack    from '@/components/widgets/StatusStack.vue'
+import StatusTile     from '@/components/widgets/StatusTile.vue'
+import TinyStack      from '@/components/widgets/TinyStack.vue'
 import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
 import CPUWidget      from '@/components/widgets/CPUWidget.vue'
@@ -10,7 +11,7 @@ import MemoryWidget   from '@/components/widgets/MemoryWidget.vue'
 import LoadWidget     from '@/components/widgets/LoadWidget.vue'
 import GPUWidget      from '@/components/widgets/GPUWidget.vue'
 import SkeletonCard   from '@/components/ui/SkeletonCard.vue'
-import type { WidgetSize } from '@/types'
+import type { WidgetSize, ConfigSize, ServiceStatusData } from '@/types'
 import { useConfig }     from '@/composables/useConfig'
 import { useServices }   from '@/composables/useServices'
 import { useActions }    from '@/composables/useActions'
@@ -47,98 +48,116 @@ interface Widget {
   props:     Record<string, unknown>
 }
 
+// A single 1-slot tile awaiting packing into a TinyStack.
+interface TinyTile {
+  id:        string
+  component: Component
+  props:     Record<string, unknown>
+}
+
+// Map the backend's per-widget config size onto the slot-based grid footprint.
+function configTier(size?: ConfigSize): WidgetSize {
+  if (size === 'm') return 'large'
+  if (size === 'l') return 'xl'
+  return 'small'
+}
+
+// Pack tiny (1-slot) tiles two-per-cell into TinyStack wrappers (each a 2-slot
+// `small` grid item), appending them to the list. An odd trailing tile stacks
+// alone. `kind` flows through so resource vs service grouping stays intact.
+function pushTinyStacks(
+  list: Widget[],
+  tiles: TinyTile[],
+  kind: WidgetKind,
+  group: string,
+): void {
+  for (let i = 0; i < tiles.length; i += 2) {
+    const pair = tiles.slice(i, i + 2)
+    list.push({
+      id:        `tiny:${group}:${pair[0].id}`,
+      kind,
+      size:      'small',
+      component: TinyStack,
+      props:     { tiles: pair },
+    })
+  }
+}
+
 const widgets = computed<Widget[]>(() => {
   const list: Widget[] = []
 
-  // System metrics render as individual S tiles, each gated on its own config
-  // flag, so the dashboard only shows the metrics the backend is collecting.
-  if (config.value.system.cpu) {
+  // Host metrics are 1-slot tiles, each gated on its own config flag. They share
+  // one column as a single "system metrics" panel (rather than a 2-per-cell
+  // split that would orphan a third tile), so CPU / RAM / GPU read as a group.
+  const metricTiles: TinyTile[] = []
+  if (config.value.system.cpu)    metricTiles.push({ id: 'system:cpu',    component: CPUWidget,    props: {} })
+  if (config.value.system.memory) metricTiles.push({ id: 'system:memory', component: MemoryWidget, props: {} })
+  if (config.value.system.gpu)    metricTiles.push({ id: 'system:gpu',    component: GPUWidget,    props: {} })
+  if (metricTiles.length) {
     list.push({
-      id:        'system:cpu',
+      id:        'tiny:metrics',
       kind:      'resource',
-      size:      's',
-      component: CPUWidget,
-      props:     {},
+      size:      'small',
+      component: TinyStack,
+      props:     { tiles: metricTiles },
     })
   }
 
-  if (config.value.system.memory) {
-    list.push({
-      id:        'system:memory',
-      kind:      'resource',
-      size:      's',
-      component: MemoryWidget,
-      props:     {},
-    })
-  }
-
+  // Load is a small (2-slot) graph-first widget — it owns the sparkline, so it
+  // is not packed with the tiny tiles.
   if (config.value.system.load) {
     list.push({
       id:        'system:load',
       kind:      'resource',
-      size:      's',
+      size:      'small',
       component: LoadWidget,
       props:     {},
     })
   }
 
-  if (config.value.system.gpu) {
-    list.push({
-      id:        'system:gpu',
-      kind:      'resource',
-      size:      's',
-      component: GPUWidget,
-      props:     {},
-    })
-  }
-
-  // Normal services render one-per-slot. Status-only services are collected and
-  // paired two-per-slot into a StatusStack, so a thin tile no longer eats a full
-  // S slot. The backend sorts services alphabetically, so status-only services
-  // arrive scattered — pairing them here keeps the stacks contiguous regardless.
-  const statusOnly: typeof services.value = []
+  // Normal services render one-per-cell; status-only services are 1-slot tiles
+  // packed two-per-cell (the APTR-14 convention, now sharing one mechanism with
+  // the host-metric tiles). The backend sorts services alphabetically, so
+  // status-only ones arrive scattered — collecting them keeps stacks contiguous.
+  const statusOnly: ServiceStatusData[] = []
 
   for (const service of services.value) {
     if (service.statusOnly) {
       statusOnly.push(service)
       continue
     }
-    const size = service.size ?? 's'
     list.push({
       id:        `service:${service.name}`,
       kind:      'service',
-      size,
+      size:      configTier(service.size),
       component: ServiceWidget,
-      props:     { service, size, storageEnabled: config.value.storageEnabled },
+      props:     { service, size: service.size ?? 's', storageEnabled: config.value.storageEnabled },
     })
   }
 
-  for (let i = 0; i < statusOnly.length; i += 2) {
-    const pair = statusOnly.slice(i, i + 2)
-    list.push({
-      id:        `status-pair:${pair[0].name}`,
-      kind:      'service',
-      size:      's',
-      component: StatusStack,
-      props:     { services: pair },
-    })
-  }
+  const statusTiles: TinyTile[] = statusOnly.map(service => ({
+    id:        `service:${service.name}`,
+    component: StatusTile,
+    props:     { service },
+  }))
+  pushTinyStacks(list, statusTiles, 'service', 'status')
 
   for (const action of actions.value) {
     list.push({
       id:        `action:${action.name}`,
       kind:      'action',
-      size:      action.size ?? 's',
+      size:      configTier(action.size),
       component: ActionWidget,
       props:     { action },
     })
   }
 
+  // Ollama is the large (4-slot) widget — two columns wide.
   if (config.value.ollamaEnabled) {
     list.push({
       id:        'ollama',
       kind:      'ollama',
-      size:      'm',
+      size:      'large',
       component: OllamaWidget,
       props:     {},
     })

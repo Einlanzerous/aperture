@@ -216,10 +216,17 @@ services:
 # Leave url blank (or remove this section entirely) to hide the widget.
 ollama:
   url: "http://localhost:11434"
+  # Optionally hide models from the widget. Each entry is an exact model name or
+  # a simple glob where '*' matches any run of characters (including '/'), so
+  # "hf.co/*" drops imported Hugging Face mirrors.
+  # hidden_models:
+  #   - "hf.co/*"
+  #   - "some-exact-model:latest"
 
 # ─── System resources widget ──────────────────────────────────────────────────
 # Displays host CPU usage, RAM, load averages, and (optionally) GPU stats.
-# The backend samples every 5 seconds and keeps a 20-minute history ring.
+# The backend samples every 5 seconds and keeps a 3-hour history ring (the Load
+# widget's history window selector picks 20 min / 60 min / 3 h from it).
 # Load average is Linux/macOS only; the widget degrades gracefully on Windows.
 #
 # Each metric is toggled independently:

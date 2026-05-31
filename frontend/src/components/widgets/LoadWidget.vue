@@ -3,22 +3,39 @@ import { computed, ref } from 'vue'
 import { useResources } from '@/composables/useResources'
 import MiniSparkline from '@/components/ui/MiniSparkline.vue'
 
-// ~20 min of history at the 5s poll cadence (20 * 60 / 5 = 240 samples).
-const HISTORY_SAMPLES = 240
+// History windows, expressed in samples at the 5s sampler cadence. The backend
+// ring buffer holds 3h (2160 samples), so the longest window reads it whole.
+const WINDOWS = [
+  { label: '20m', samples: 240 },
+  { label: '60m', samples: 720 },
+  { label: '3h',  samples: 2160 },
+] as const
 
-const { data: resources, loading, error } = useResources(5_000, HISTORY_SAMPLES)
+const windowSamples = ref<number>(WINDOWS[0].samples)
 
-const expanded = ref(false)
+// The requested history count is reactive, so changing the window re-points the
+// polling URL; refresh() pulls the new window immediately rather than waiting
+// for the next tick.
+const { data: resources, loading, error, refresh } = useResources(5_000, windowSamples)
 
-// load1 history, oldest->newest; null/empty when history is absent or too short.
+function onWindowChange(e: Event): void {
+  windowSamples.value = Number((e.target as HTMLSelectElement).value)
+  refresh()
+}
+
+const activeLabel = computed(
+  () => WINDOWS.find(w => w.samples === windowSamples.value)?.label ?? '',
+)
+
+// load1 history, oldest->newest; empty until at least two samples land.
 const load1History = computed(() => resources.value?.history?.load1 ?? [])
 const hasSparkline = computed(() => load1History.value.length >= 2)
 </script>
 
 <template>
-  <article class="widget-card gap-4 p-4">
+  <article class="widget-card gap-3 p-4">
 
-    <!-- Header -->
+    <!-- Header: title + history-window selector -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <svg class="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none"
@@ -28,38 +45,32 @@ const hasSparkline = computed(() => load1History.value.length >= 2)
         </svg>
         <h2 class="text-sm font-semibold text-gray-100">Load Average</h2>
       </div>
-      <button
+      <select
         v-if="resources?.load"
-        type="button"
-        class="rounded p-0.5 text-gray-500 transition-colors hover:text-gray-300"
-        :aria-expanded="expanded"
-        :aria-label="expanded ? 'Hide history' : 'Show history'"
-        @click="expanded = !expanded"
+        class="rounded border border-gray-700 bg-gray-800 px-1.5 py-0.5 text-xs
+               text-gray-300 transition-colors hover:border-gray-600
+               focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+        :value="windowSamples"
+        aria-label="History window"
+        @change="onWindowChange"
       >
-        <svg
-          class="h-4 w-4 transition-transform duration-200"
-          :class="expanded ? 'rotate-180' : ''"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="1.75" aria-hidden="true"
-        >
-          <path d="M6 9l6 6 6-6"/>
-        </svg>
-      </button>
+        <option v-for="w in WINDOWS" :key="w.samples" :value="w.samples">{{ w.label }}</option>
+      </select>
     </div>
 
     <!-- Loading skeleton -->
     <template v-if="loading">
-      <div class="space-y-1.5 animate-pulse">
+      <div class="space-y-2 animate-pulse">
         <div class="h-3 w-32 rounded bg-gray-800" />
+        <div class="h-10 w-full rounded bg-gray-800" />
       </div>
     </template>
 
     <!-- Error state -->
     <p v-else-if="error" class="text-xs text-red-400">{{ error }}</p>
 
-    <!-- Stats -->
+    <!-- Graph-first: 1m/5m/15m numbers above the always-on sparkline -->
     <template v-else-if="resources?.load">
-      <!-- Collapsed: 1m/5m/15m numbers -->
       <div class="flex gap-4 text-xs tabular-nums">
         <span>
           <span class="text-gray-500">1m </span>
@@ -75,11 +86,10 @@ const hasSparkline = computed(() => load1History.value.length >= 2)
         </span>
       </div>
 
-      <!-- Expanded: load1 sparkline over the last ~20 min -->
-      <div v-if="expanded" class="border-t border-gray-800 pt-3">
-        <p class="mb-1.5 text-xs font-medium text-gray-400">1m load &middot; last ~20 min</p>
+      <div>
+        <p class="mb-1.5 text-xs font-medium text-gray-400">1m load &middot; last {{ activeLabel }}</p>
         <MiniSparkline v-if="hasSparkline" :values="load1History" />
-        <p v-else class="text-xs text-gray-600">Not enough history yet.</p>
+        <p v-else class="text-xs text-gray-600">Collecting history…</p>
       </div>
     </template>
 
