@@ -143,7 +143,14 @@ func amdSMIProductName() string {
 	if err := json.Unmarshal(out, &entries); err != nil || len(entries) == 0 {
 		return ""
 	}
-	return entries[0].ASIC.MarketName
+	name := entries[0].ASIC.MarketName
+	// In a minimal container amd-smi can't always resolve the marketing name and
+	// falls back to the raw "0x1002" vendor id. Treat that as no name so the UI
+	// shows the clean vendor label instead of a hex string.
+	if strings.HasPrefix(name, "0x") {
+		return ""
+	}
+	return name
 }
 
 // amdSMIValueField extracts a {"value": <number>, "unit": …} field. Returns
