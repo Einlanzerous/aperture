@@ -9,10 +9,6 @@ const props = defineProps<{
 
 const sc = computed(() => STATUS_COLORS[props.service.status] ?? STATUS_COLORS.unknown)
 
-const showMessage = computed(
-  () => props.service.status !== 'healthy' && !!props.service.message,
-)
-
 function timeAgo(iso: string): string {
   const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (secs <  60) return `${secs}s ago`
@@ -20,7 +16,14 @@ function timeAgo(iso: string): string {
   return `${Math.floor(secs / 3600)}h ago`
 }
 
-const tooltip = computed(() => `Last checked ${timeAgo(props.service.checkedAt)}`)
+// A status-only tile is exactly one slot, so it stays a single row. Any error
+// message moves into the tooltip rather than adding a second line.
+const tooltip = computed(() => {
+  const base = `Last checked ${timeAgo(props.service.checkedAt)}`
+  return props.service.status !== 'healthy' && props.service.message
+    ? `${props.service.message} — ${base}`
+    : base
+})
 </script>
 
 <template>
@@ -29,7 +32,7 @@ const tooltip = computed(() => `Last checked ${timeAgo(props.service.checkedAt)}
            hover:border-gray-700 hover:shadow-lg"
     :title="tooltip"
   >
-    <div class="flex h-16 items-center gap-3 px-4">
+    <div class="flex h-full items-center gap-3 px-4">
       <p class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-100">
         {{ service.name }}
       </p>
@@ -53,13 +56,5 @@ const tooltip = computed(() => `Last checked ${timeAgo(props.service.checkedAt)}
         {{ sc.label }}
       </span>
     </div>
-
-    <p
-      v-if="showMessage"
-      class="truncate border-t border-gray-800 px-4 py-2 text-xs"
-      :class="sc.msg"
-    >
-      {{ service.message }}
-    </p>
   </article>
 </template>

@@ -8,13 +8,15 @@ export type ServiceType   = 'http' | 'docker'
 // l→xl) — see SIZE_CLASS in DraggableGrid.vue.
 export type ConfigSize = 's' | 'm' | 'l'
 
-// WidgetSize is the slot-based footprint a widget occupies in the grid. One slot
-// is the footprint of a single tiny tile (a status-only/CPU/GPU/Memory tile):
-//   tiny  = 1 slot   (packed two-per-cell into a TinyStack)
-//   small = 2 slots  (a standard one-column card — service tiles, Load)
-//   large = 4 slots  (two columns — the Ollama widget)
-//   xl    = 6 slots  (full three-column width)
-export type WidgetSize = 'tiny' | 'small' | 'large' | 'xl'
+// WidgetSize is the slot-based footprint a widget occupies in the grid, where
+// one slot is a single tiny tile and the grid uses fixed-height rows so every
+// widget is an exact slot multiple in both dimensions (see DraggableGrid):
+//   tiny   = 1×1   CPU/GPU/Memory + status-only tiles
+//   small  = 1×2   standard service tiles, Load
+//   large  = 2×2   service size "m"
+//   xl     = 3×2   service size "l" (full three-column width)
+//   ollama = 2×3   the Ollama widget (two columns wide, three rows tall)
+export type WidgetSize = 'tiny' | 'small' | 'large' | 'xl' | 'ollama'
 
 // ─── API response shapes ─────────────────────────────────────────────────────
 

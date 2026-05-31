@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useOllama } from '@/composables/useOllama'
 import { fmtBytes } from '@/utils/format'
-
-const MAX_VISIBLE_MODELS = 5
 
 const { models, loading, error } = useOllama(60_000)
 
@@ -12,18 +10,15 @@ const status = computed(() => {
   if (error.value)   return 'error'
   return 'ok'
 })
-
-const expanded    = ref(false)
-const visible     = computed(() => expanded.value ? models.value : models.value.slice(0, MAX_VISIBLE_MODELS))
-const hasMore     = computed(() => models.value.length > MAX_VISIBLE_MODELS)
-const hiddenCount = computed(() => models.value.length - MAX_VISIBLE_MODELS)
 </script>
 
 <template>
-  <article class="widget-card gap-4 p-4">
+  <!-- Large (4-slot) widget at a fixed 2×2 footprint; the model list scrolls
+       inside rather than growing the card, so it tiles cleanly. -->
+  <article class="widget-card gap-3 overflow-hidden p-4">
 
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex shrink-0 items-center justify-between">
       <div class="flex items-center gap-2">
         <svg class="h-4 w-4 text-violet-400" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.75" aria-hidden="true">
@@ -72,10 +67,10 @@ const hiddenCount = computed(() => models.value.length - MAX_VISIBLE_MODELS)
     <!-- Empty -->
     <p v-else-if="models.length === 0" class="text-xs text-gray-500">No models pulled yet.</p>
 
-    <!-- Model list -->
-    <ul v-else class="space-y-1.5">
+    <!-- Model list — scrolls within the fixed footprint -->
+    <ul v-else class="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
       <li
-        v-for="model in visible"
+        v-for="model in models"
         :key="model.name"
         class="flex items-center justify-between rounded-lg bg-gray-800/60 px-3 py-2
                text-xs transition-colors hover:bg-gray-800"
@@ -99,14 +94,5 @@ const hiddenCount = computed(() => models.value.length - MAX_VISIBLE_MODELS)
         </div>
       </li>
     </ul>
-
-    <!-- Expand / collapse -->
-    <button
-      v-if="hasMore"
-      class="text-xs text-gray-500 hover:text-gray-300 transition-colors text-left"
-      @click="expanded = !expanded"
-    >
-      {{ expanded ? '↑ Show fewer' : `+ ${hiddenCount} more model${hiddenCount !== 1 ? 's' : ''}` }}
-    </button>
   </article>
 </template>

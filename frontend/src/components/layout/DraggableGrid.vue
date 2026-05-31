@@ -14,17 +14,22 @@ const emit = defineEmits<{
   reorder: [orderedIds: string[]]
 }>()
 
-// Slot-based footprint → column span. One slot is a single tiny tile; a full
-// grid cell is two slots tall, so tiny tiles are packed two-per-cell upstream
-// (TinyStack) and reach the grid as a `small` wrapper. Heights are content-
-// driven; only the column span varies here.
-//   tiny / small → 1 column   large → 2 columns   xl → 3 columns (full width)
+// Slot-based footprint → column + row span. The grid uses fixed-height rows
+// (auto-rows-[SLOT]) so every widget is an exact multiple of one slot in BOTH
+// dimensions and tiles with no holes (grid-flow-row-dense backfills gaps):
+//   tiny = 1×1   small = 1×2   large = 2×2   xl = 3×2   ollama = 2×3
+// One slot is a tiny tile; a small widget is two slots tall, so two tinies
+// stacked equal one small (the row gap math works out via gap-4).
 const SIZE_CLASS: Record<WidgetSize, string> = {
-  tiny:  'col-span-1',
-  small: 'col-span-1',
-  large: 'col-span-1 md:col-span-2',
-  xl:    'col-span-1 md:col-span-3',
+  tiny:   'col-span-1 row-span-1',
+  small:  'col-span-1 row-span-2',
+  large:  'col-span-1 row-span-2 md:col-span-2',
+  xl:     'col-span-1 row-span-2 md:col-span-3',
+  ollama: 'col-span-1 row-span-3 md:col-span-2',
 }
+
+// Full-width sizes snap to whole rows while dragging (no left/right half).
+const FULL_WIDTH_SIZES = new Set<WidgetSize>(['xl'])
 
 // ─── Drag state ─────────────────────────────────────────────────────────────
 // While dragging, the source tile is `display: none` so it stops occupying a
@@ -37,6 +42,22 @@ const SIZE_CLASS: Record<WidgetSize, string> = {
 
 const dragId         = ref<string | null>(null)
 const projectedIndex = ref<number | null>(null)
+
+// Last pointer position a projection was computed at. Inserting the ghost
+// reflows the grid, which fires fresh `dragover` events on whatever tile slides
+// under a *stationary* cursor — re-projecting at the same point and flipping the
+// ghost back and forth forever. Ignoring events that haven't moved past this
+// threshold breaks that feedback loop (real pointer motion always re-projects).
+const PROJECT_MOVE_THRESHOLD = 6
+let lastProjectX = -1
+let lastProjectY = -1
+
+function pointerMovedEnough(x: number, y: number): boolean {
+  return (
+    Math.abs(x - lastProjectX) >= PROJECT_MOVE_THRESHOLD ||
+    Math.abs(y - lastProjectY) >= PROJECT_MOVE_THRESHOLD
+  )
+}
 
 const sourceIndex = computed<number>(() =>
   dragId.value ? props.items.findIndex((i) => i.id === dragId.value) : -1,
@@ -58,6 +79,8 @@ const isActive = computed(
 function reset(): void {
   dragId.value         = null
   projectedIndex.value = null
+  lastProjectX         = -1
+  lastProjectY         = -1
 }
 
 function commitDrop(): void {
@@ -95,7 +118,7 @@ function projectFromPointer(
 
   const rect = hoveredEl.getBoundingClientRect()
 
-  if (draggedSize.value === 'xl') {
+  if (FULL_WIDTH_SIZES.has(draggedSize.value)) {
     const bounds = rowBoundsOf(hoveredEl)
     if (!bounds) return idx
     const before = clientY < rect.top + rect.height / 2
@@ -150,6 +173,12 @@ function onDragOver(e: DragEvent, id: string): void {
     projectedIndex.value = sourceIndex.value
     return
   }
+  // Skip reflow-triggered events at a stationary pointer (see threshold note).
+  if (projectedIndex.value !== null && !pointerMovedEnough(e.clientX, e.clientY)) {
+    return
+  }
+  lastProjectX = e.clientX
+  lastProjectY = e.clientY
   projectedIndex.value = projectFromPointer(
     id,
     e.currentTarget as HTMLElement,
@@ -223,12 +252,17 @@ function onPointerCancelBeforePress(): void {
 function onTouchMove(e: PointerEvent): void {
   if (!touchActive) return
   e.preventDefault()
+  if (projectedIndex.value !== null && !pointerMovedEnough(e.clientX, e.clientY)) {
+    return
+  }
   const el = document
     .elementFromPoint(e.clientX, e.clientY)
     ?.closest<HTMLElement>('[data-grid-item-id]')
   if (!el) return
   const id = el.dataset.gridItemId
   if (!id || id === dragId.value) return
+  lastProjectX = e.clientX
+  lastProjectY = e.clientY
   projectedIndex.value = projectFromPointer(id, el, e.clientX, e.clientY)
 }
 
@@ -253,7 +287,8 @@ function endTouch(): void {
 
 <template>
   <div
-    class="grid grid-cols-1 gap-4 md:grid-cols-3"
+    class="grid grid-flow-row-dense auto-rows-[64px] grid-cols-1 gap-4 md:grid-cols-3
+           [&>*>article]:h-full [&>*>a]:h-full"
     @dragover="onGridDragOver"
     @drop="onGridDrop"
   >
