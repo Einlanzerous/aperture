@@ -14,16 +14,17 @@ const emit = defineEmits<{
   reorder: [orderedIds: string[]]
 }>()
 
-// Slot-based footprint → column span. One slot is a single tiny tile; a full
-// grid cell is two slots tall, so tiny tiles are packed two-per-cell upstream
-// (TinyStack) and reach the grid as a `small` wrapper. Heights are content-
-// driven; only the column span varies here.
-//   tiny / small → 1 column   large → 2 columns   xl → 3 columns (full width)
+// Slot-based footprint → column + row span. The grid uses fixed-height rows
+// (auto-rows-[SLOT]) so every widget is an exact multiple of one slot in BOTH
+// dimensions and tiles with no holes (grid-flow-row-dense backfills gaps):
+//   tiny  = 1×1   small = 1×2   large = 2×2   xl = 3×2
+// One slot is a tiny tile; a small widget is two slots tall, so two tinies
+// stacked equal one small (the row gap math works out via gap-4).
 const SIZE_CLASS: Record<WidgetSize, string> = {
-  tiny:  'col-span-1',
-  small: 'col-span-1',
-  large: 'col-span-1 md:col-span-2',
-  xl:    'col-span-1 md:col-span-3',
+  tiny:  'col-span-1 row-span-1',
+  small: 'col-span-1 row-span-2',
+  large: 'col-span-1 row-span-2 md:col-span-2',
+  xl:    'col-span-1 row-span-2 md:col-span-3',
 }
 
 // ─── Drag state ─────────────────────────────────────────────────────────────
@@ -253,7 +254,8 @@ function endTouch(): void {
 
 <template>
   <div
-    class="grid grid-cols-1 gap-4 md:grid-cols-3"
+    class="grid grid-flow-row-dense auto-rows-[72px] grid-cols-1 gap-4 md:grid-cols-3
+           [&>*>article]:h-full [&>*>a]:h-full"
     @dragover="onGridDragOver"
     @drop="onGridDrop"
   >

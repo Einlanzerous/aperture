@@ -38,7 +38,7 @@ const vramLabel = computed(() => {
   <!-- Tiny (1-slot) tile: GPU | util [thick bar] VRAM. The "Not available" state
        keeps the exact same h-16 footprint so the grid never shifts. -->
   <article class="widget-card cursor-default">
-    <div class="flex h-16 items-center gap-3 px-4">
+    <div class="flex h-full items-center gap-3 px-4">
       <span class="w-10 shrink-0 text-sm font-semibold text-gray-100">GPU</span>
 
       <template v-if="error">

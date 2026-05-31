@@ -27,7 +27,7 @@ const pctLabel   = computed(() => (cpu.value ? `${cpu.value.percent.toFixed(0)}%
   <!-- Tiny (1-slot) tile: LABEL | cores [thick bar] percent. Fixed h-16 so the
        footprint never shifts between loading / error / live states. -->
   <article class="widget-card cursor-default">
-    <div class="flex h-16 items-center gap-3 px-4">
+    <div class="flex h-full items-center gap-3 px-4">
       <span class="w-10 shrink-0 text-sm font-semibold text-gray-100">CPU</span>
 
       <template v-if="error">
