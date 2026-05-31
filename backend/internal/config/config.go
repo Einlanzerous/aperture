@@ -43,26 +43,94 @@ type ActionConfig struct {
 }
 
 type ServiceConfig struct {
-	Name          string      `yaml:"name"`
-	Type          ServiceType `yaml:"type"`
-	URL           string      `yaml:"url,omitempty"`
-	Container     string      `yaml:"container,omitempty"`
-	Icon          string      `yaml:"icon,omitempty"`
-	Category      string      `yaml:"category,omitempty"`
-	Href          string      `yaml:"href,omitempty"`
-	Size          string      `yaml:"size,omitempty"`           // s | m | l
-	DetailDefault bool        `yaml:"detail_default,omitempty"` // show detailed history view by default
-	StatusOnly    bool        `yaml:"status_only,omitempty"`    // compact non-clickable tile for infra-only services
-	SkipVerify      bool        `yaml:"skip_verify,omitempty"`       // skip TLS certificate verification
-	CheckConnectionOnly bool    `yaml:"check_connection_only,omitempty"` // only verify TCP/TLS connectivity, not HTTP status
+	Name                string      `yaml:"name"`
+	Type                ServiceType `yaml:"type"`
+	URL                 string      `yaml:"url,omitempty"`
+	Container           string      `yaml:"container,omitempty"`
+	Icon                string      `yaml:"icon,omitempty"`
+	Category            string      `yaml:"category,omitempty"`
+	Href                string      `yaml:"href,omitempty"`
+	Size                string      `yaml:"size,omitempty"`                  // s | m | l
+	DetailDefault       bool        `yaml:"detail_default,omitempty"`        // show detailed history view by default
+	StatusOnly          bool        `yaml:"status_only,omitempty"`           // compact non-clickable tile for infra-only services
+	SkipVerify          bool        `yaml:"skip_verify,omitempty"`           // skip TLS certificate verification
+	CheckConnectionOnly bool        `yaml:"check_connection_only,omitempty"` // only verify TCP/TLS connectivity, not HTTP status
 }
 
 type OllamaConfig struct {
 	URL string `yaml:"url"`
 }
 
-type SystemConfig struct {
+// MetricConfig toggles a single system metric (cpu, memory, load, or gpu).
+type MetricConfig struct {
 	Enabled bool `yaml:"enabled"`
+}
+
+// SystemConfig controls which host metrics are sampled and exposed.
+//
+// Two YAML shapes are accepted for backward compatibility:
+//
+//	system:
+//	  enabled: true          # old bare schema — enables ALL four metrics
+//
+//	system:
+//	  cpu:    { enabled: true }
+//	  memory: { enabled: true }
+//	  load:   { enabled: true }
+//	  gpu:    { enabled: true }
+//
+// When a sub-metric key is present it overrides the bare flag for that metric.
+type SystemConfig struct {
+	CPU    MetricConfig `yaml:"cpu"`
+	Memory MetricConfig `yaml:"memory"`
+	Load   MetricConfig `yaml:"load"`
+	GPU    MetricConfig `yaml:"gpu"`
+}
+
+// UnmarshalYAML implements the backward-compat normalization for SystemConfig.
+// A bare "enabled" applies to every metric; any explicitly-present sub-key
+// overrides that default for its own metric.
+func (s *SystemConfig) UnmarshalYAML(value *yaml.Node) error {
+	// raw mirrors every field plus the legacy bare "enabled" flag. Pointers let
+	// us detect whether a sub-key was actually present in the YAML.
+	var raw struct {
+		Enabled *bool         `yaml:"enabled"`
+		CPU     *MetricConfig `yaml:"cpu"`
+		Memory  *MetricConfig `yaml:"memory"`
+		Load    *MetricConfig `yaml:"load"`
+		GPU     *MetricConfig `yaml:"gpu"`
+	}
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+
+	// Base default comes from the bare flag (old schema). Defaults to false when
+	// neither the bare flag nor any sub-key is present.
+	base := false
+	if raw.Enabled != nil {
+		base = *raw.Enabled
+	}
+
+	s.CPU = MetricConfig{Enabled: base}
+	s.Memory = MetricConfig{Enabled: base}
+	s.Load = MetricConfig{Enabled: base}
+	s.GPU = MetricConfig{Enabled: base}
+
+	// A present sub-key overrides the base for that metric.
+	if raw.CPU != nil {
+		s.CPU = *raw.CPU
+	}
+	if raw.Memory != nil {
+		s.Memory = *raw.Memory
+	}
+	if raw.Load != nil {
+		s.Load = *raw.Load
+	}
+	if raw.GPU != nil {
+		s.GPU = *raw.GPU
+	}
+
+	return nil
 }
 
 type RetentionConfig struct {

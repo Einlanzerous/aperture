@@ -57,8 +57,15 @@ func main() {
 	}
 	worker.Start()
 
-	sysMonitor := system.NewMonitor()
-	router := api.NewRouter(worker, sysMonitor, cfg, historyStore, actionMgr)
+	sysSampler := system.NewSampler(system.Metrics{
+		CPU:    cfg.System.CPU.Enabled,
+		Memory: cfg.System.Memory.Enabled,
+		Load:   cfg.System.Load.Enabled,
+		GPU:    cfg.System.GPU.Enabled,
+	})
+	sysSampler.Start()
+
+	router := api.NewRouter(worker, sysSampler, cfg, historyStore, actionMgr)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
@@ -85,6 +92,7 @@ func main() {
 	defer cancel()
 
 	worker.Stop(ctx)
+	sysSampler.Stop()
 	if historyStore != nil {
 		if err := historyStore.Close(); err != nil {
 			slog.Error("store close", "error", err)
