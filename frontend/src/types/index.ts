@@ -11,11 +11,12 @@ export type ConfigSize = 's' | 'm' | 'l'
 // WidgetSize is the slot-based footprint a widget occupies in the grid, where
 // one slot is a single tiny tile and the grid uses fixed-height rows so every
 // widget is an exact slot multiple in both dimensions (see DraggableGrid):
-//   tiny  = 1 slot   (1×1 — CPU/GPU/Memory + status-only tiles)
-//   small = 2 slots  (1×2 — standard service tiles, Load)
-//   large = 4 slots  (2×2 — the Ollama widget)
-//   xl    = 6 slots  (3×2 — full three-column width)
-export type WidgetSize = 'tiny' | 'small' | 'large' | 'xl'
+//   tiny   = 1×1   CPU/GPU/Memory + status-only tiles
+//   small  = 1×2   standard service tiles, Load
+//   large  = 2×2   service size "m"
+//   xl     = 3×2   service size "l" (full three-column width)
+//   ollama = 3×4   the Ollama widget (full width, four rows tall)
+export type WidgetSize = 'tiny' | 'small' | 'large' | 'xl' | 'ollama'
 
 // ─── API response shapes ─────────────────────────────────────────────────────
 

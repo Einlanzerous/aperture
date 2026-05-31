@@ -21,7 +21,7 @@ const barWidth = computed(() => `${Math.min(cpu.value?.percent ?? 0, 100)}%`)
 // Inside the bar: utilization % (max is an implied 100%). Right of the bar: the
 // logical core count.
 const insideText = computed(() => (cpu.value ? `${cpu.value.percent.toFixed(0)}%` : '—'))
-const rightText  = computed(() => (cpu.value ? `${cpu.value.cores}c` : '—'))
+const rightText  = computed(() => (cpu.value ? `${cpu.value.cores} core` : '—'))
 </script>
 
 <template>
@@ -49,7 +49,7 @@ const rightText  = computed(() => (cpu.value ? `${cpu.value.cores}c` : '—'))
             {{ insideText }}
           </span>
         </div>
-        <span class="w-14 shrink-0 text-right text-xs tabular-nums text-gray-400">
+        <span class="w-16 shrink-0 text-right text-xs tabular-nums text-gray-400">
           {{ rightText }}
         </span>
       </template>

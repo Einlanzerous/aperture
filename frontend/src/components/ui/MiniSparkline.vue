@@ -4,6 +4,7 @@ import { computed } from 'vue'
 const props = defineProps<{
   values: number[]   // oldest->newest
   color?: string     // any CSS colour, default emerald-500
+  fill?:  boolean    // stretch to the parent's height instead of a fixed 40px
 }>()
 
 const WIDTH = 200
@@ -40,8 +41,8 @@ const fillPoints = computed(() => {
     v-if="points"
     :viewBox="`0 0 ${WIDTH} ${HEIGHT}`"
     preserveAspectRatio="none"
-    class="w-full"
-    style="height: 40px"
+    :class="fill ? 'h-full w-full' : 'w-full'"
+    :style="fill ? undefined : 'height: 40px'"
   >
     <polygon :points="fillPoints!" :fill="stroke" fill-opacity="0.1" />
     <polyline
