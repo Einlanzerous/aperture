@@ -15,7 +15,7 @@ export type ConfigSize = 's' | 'm' | 'l'
 //   small  = 1×2   standard service tiles, Load
 //   large  = 2×2   service size "m"
 //   xl     = 3×2   service size "l" (full three-column width)
-//   ollama = 3×4   the Ollama widget (full width, four rows tall)
+//   ollama = 2×3   the Ollama widget (two columns wide, three rows tall)
 export type WidgetSize = 'tiny' | 'small' | 'large' | 'xl' | 'ollama'
 
 // ─── API response shapes ─────────────────────────────────────────────────────
