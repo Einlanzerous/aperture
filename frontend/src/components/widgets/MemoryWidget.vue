@@ -27,7 +27,7 @@ const totalLabel = computed(() => (mem.value ? fmtBytes(mem.value.total) : '—'
 <template>
   <!-- Tiny (1-slot) tile: RAM | used [thick bar] total. -->
   <article class="widget-card cursor-default">
-    <div class="flex h-16 items-center gap-3 px-4">
+    <div class="flex h-full items-center gap-3 px-4">
       <span class="w-10 shrink-0 text-sm font-semibold text-gray-100">RAM</span>
 
       <template v-if="error">
