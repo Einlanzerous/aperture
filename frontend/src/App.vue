@@ -114,12 +114,12 @@ const widgets = computed<Widget[]>(() => {
     })
   }
 
-  // Ollama is the large (4-slot) widget — two columns wide.
+  // Ollama is the largest widget — full width, four rows tall (3×4).
   if (config.value.ollamaEnabled) {
     list.push({
       id:        'ollama',
       kind:      'ollama',
-      size:      'large',
+      size:      'ollama',
       component: OllamaWidget,
       props:     {},
     })

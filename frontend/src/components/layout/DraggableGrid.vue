@@ -17,15 +17,19 @@ const emit = defineEmits<{
 // Slot-based footprint → column + row span. The grid uses fixed-height rows
 // (auto-rows-[SLOT]) so every widget is an exact multiple of one slot in BOTH
 // dimensions and tiles with no holes (grid-flow-row-dense backfills gaps):
-//   tiny  = 1×1   small = 1×2   large = 2×2   xl = 3×2
+//   tiny = 1×1   small = 1×2   large = 2×2   xl = 3×2   ollama = 3×4
 // One slot is a tiny tile; a small widget is two slots tall, so two tinies
 // stacked equal one small (the row gap math works out via gap-4).
 const SIZE_CLASS: Record<WidgetSize, string> = {
-  tiny:  'col-span-1 row-span-1',
-  small: 'col-span-1 row-span-2',
-  large: 'col-span-1 row-span-2 md:col-span-2',
-  xl:    'col-span-1 row-span-2 md:col-span-3',
+  tiny:   'col-span-1 row-span-1',
+  small:  'col-span-1 row-span-2',
+  large:  'col-span-1 row-span-2 md:col-span-2',
+  xl:     'col-span-1 row-span-2 md:col-span-3',
+  ollama: 'col-span-1 row-span-4 md:col-span-3',
 }
+
+// Full-width sizes snap to whole rows while dragging (no left/right half).
+const FULL_WIDTH_SIZES = new Set<WidgetSize>(['xl', 'ollama'])
 
 // ─── Drag state ─────────────────────────────────────────────────────────────
 // While dragging, the source tile is `display: none` so it stops occupying a
@@ -114,7 +118,7 @@ function projectFromPointer(
 
   const rect = hoveredEl.getBoundingClientRect()
 
-  if (draggedSize.value === 'xl') {
+  if (FULL_WIDTH_SIZES.has(draggedSize.value)) {
     const bounds = rowBoundsOf(hoveredEl)
     if (!bounds) return idx
     const before = clientY < rect.top + rect.height / 2
@@ -283,7 +287,7 @@ function endTouch(): void {
 
 <template>
   <div
-    class="grid grid-flow-row-dense auto-rows-[72px] grid-cols-1 gap-4 md:grid-cols-3
+    class="grid grid-flow-row-dense auto-rows-[64px] grid-cols-1 gap-4 md:grid-cols-3
            [&>*>article]:h-full [&>*>a]:h-full"
     @dragover="onGridDragOver"
     @drop="onGridDrop"

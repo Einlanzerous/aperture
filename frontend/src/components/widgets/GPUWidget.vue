@@ -60,7 +60,7 @@ const rightText  = computed(() => (available.value ? fmtGB(gpu.value!.vramTotal)
             {{ insideText }}
           </span>
         </div>
-        <span class="w-14 shrink-0 text-right text-xs tabular-nums text-gray-400">
+        <span class="w-16 shrink-0 text-right text-xs tabular-nums text-gray-400">
           {{ rightText || '—' }}
         </span>
       </template>

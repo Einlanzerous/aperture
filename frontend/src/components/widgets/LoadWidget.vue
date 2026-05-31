@@ -23,10 +23,6 @@ function onWindowChange(e: Event): void {
   refresh()
 }
 
-const activeLabel = computed(
-  () => WINDOWS.find(w => w.samples === windowSamples.value)?.label ?? '',
-)
-
 // load1 history, oldest->newest; empty until at least two samples land.
 const load1History = computed(() => resources.value?.history?.load1 ?? [])
 const hasSparkline = computed(() => load1History.value.length >= 2)
@@ -69,28 +65,14 @@ const hasSparkline = computed(() => load1History.value.length >= 2)
     <!-- Error state -->
     <p v-else-if="error" class="text-xs text-red-400">{{ error }}</p>
 
-    <!-- Graph-first: 1m/5m/15m numbers above the always-on sparkline -->
+    <!-- Graph-first: a labeled sparkline that fills the freed vertical space -->
     <template v-else-if="resources?.load">
-      <div class="flex gap-4 text-xs tabular-nums">
-        <span>
-          <span class="text-gray-500">1m </span>
-          <span class="text-gray-200">{{ resources.load.load1.toFixed(2) }}</span>
-        </span>
-        <span>
-          <span class="text-gray-500">5m </span>
-          <span class="text-gray-200">{{ resources.load.load5.toFixed(2) }}</span>
-        </span>
-        <span>
-          <span class="text-gray-500">15m </span>
-          <span class="text-gray-200">{{ resources.load.load15.toFixed(2) }}</span>
-        </span>
+      <div class="flex items-baseline justify-between">
+        <span class="text-xs font-medium text-gray-400">1-minute load average</span>
+        <span class="text-xs tabular-nums text-gray-500">now {{ resources.load.load1.toFixed(2) }}</span>
       </div>
-
-      <div>
-        <p class="mb-1.5 text-xs font-medium text-gray-400">1m load &middot; last {{ activeLabel }}</p>
-        <MiniSparkline v-if="hasSparkline" :values="load1History" />
-        <p v-else class="text-xs text-gray-600">Collecting history…</p>
-      </div>
+      <MiniSparkline v-if="hasSparkline" :values="load1History" fill class="min-h-0 flex-1" />
+      <p v-else class="text-xs text-gray-600">Collecting history…</p>
     </template>
 
     <!-- Load unavailable (disabled in config / null) -->
