@@ -47,10 +47,29 @@ export interface LoadStats {
   load15: number
 }
 
+export interface GpuStats {
+  available: boolean
+  vendor:    'amd' | 'nvidia' | ''
+  name:      string
+  percent:   number
+  vramUsed:  number  // bytes
+  vramTotal: number  // bytes
+  tempC:     number | null  // null when temperature unreadable
+}
+
+export interface SystemHistory {
+  cpu:    number[]  // cpu.percent samples, oldest->newest
+  memory: number[]  // memory.percent samples
+  load1:  number[]  // load1 samples
+  gpu:    number[]  // gpu.percent samples
+}
+
 export interface SystemResources {
-  cpu:       CPUStats
-  memory:    MemoryStats
-  load:      LoadStats
+  cpu:       CPUStats | null     // null when cpu disabled in config
+  memory:    MemoryStats | null  // null when memory disabled in config
+  load:      LoadStats | null    // null when load disabled in config
+  gpu:       GpuStats | null     // null when gpu disabled in config
+  history:   SystemHistory | null  // present only when ?history=n>0
   updatedAt: string
 }
 
@@ -73,11 +92,19 @@ export interface OllamaModelsResponse {
   models: OllamaModel[]
 }
 
+export interface SystemMetricFlags {
+  cpu:    boolean
+  memory: boolean
+  load:   boolean
+  gpu:    boolean
+}
+
 export interface DashboardConfig {
   title:          string
   checkInterval:  number
   ollamaEnabled:  boolean
   systemEnabled:  boolean
+  system:         SystemMetricFlags  // per-metric enable flags
   actionsEnabled: boolean
   storageEnabled: boolean
 }

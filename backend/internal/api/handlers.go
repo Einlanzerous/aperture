@@ -24,17 +24,17 @@ const (
 
 type Handler struct {
 	worker     *checker.Worker
-	sysMonitor *system.Monitor
+	sysSampler *system.Sampler
 	cfg        *config.Config
 	store      store.Store
 	actions    *semaphore.Manager
 	httpClient *http.Client
 }
 
-func NewHandler(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config, s store.Store, actions *semaphore.Manager) *Handler {
+func NewHandler(worker *checker.Worker, sysSampler *system.Sampler, cfg *config.Config, s store.Store, actions *semaphore.Manager) *Handler {
 	return &Handler{
 		worker:     worker,
-		sysMonitor: sysMonitor,
+		sysSampler: sysSampler,
 		cfg:        cfg,
 		store:      s,
 		actions:    actions,
@@ -118,10 +118,19 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 // GetConfig returns dashboard-level configuration for the frontend.
 func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"title":          h.cfg.Title,
-		"checkInterval":  h.cfg.CheckInterval,
-		"ollamaEnabled":  h.cfg.Ollama.URL != "",
-		"systemEnabled":  h.cfg.System.Enabled,
+		"title":         h.cfg.Title,
+		"checkInterval": h.cfg.CheckInterval,
+		"ollamaEnabled": h.cfg.Ollama.URL != "",
+		// systemEnabled stays for backward compat: true if any metric is on.
+		"systemEnabled": h.cfg.System.CPU.Enabled || h.cfg.System.Memory.Enabled ||
+			h.cfg.System.Load.Enabled || h.cfg.System.GPU.Enabled,
+		// Per-metric flags let the frontend decide which widgets to render.
+		"system": map[string]bool{
+			"cpu":    h.cfg.System.CPU.Enabled,
+			"memory": h.cfg.System.Memory.Enabled,
+			"load":   h.cfg.System.Load.Enabled,
+			"gpu":    h.cfg.System.GPU.Enabled,
+		},
 		"actionsEnabled": h.actions != nil,
 		"storageEnabled": h.store != nil,
 	})
@@ -135,14 +144,32 @@ func (h *Handler) GetServices(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetSystemResources samples and returns the host's CPU / memory / load stats.
+// GetSystemResources returns the latest sampled CPU / memory / load / GPU stats
+// from the background sampler, with no blocking system calls in the request path.
+// The optional ?history=<n> query includes the last n samples (oldest -> newest).
 func (h *Handler) GetSystemResources(w http.ResponseWriter, r *http.Request) {
-	res, err := h.sysMonitor.Collect()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+	// history defaults to 0 (omit the history block). Reject malformed values but
+	// treat an absent param as "no history".
+	history, ok := queryHistory(w, r)
+	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, res)
+	writeJSON(w, http.StatusOK, h.sysSampler.Snapshot(history))
+}
+
+// queryHistory parses the optional ?history=<n> param. Absent => 0 (no history).
+// A non-negative integer is required; anything else is a 400.
+func queryHistory(w http.ResponseWriter, r *http.Request) (int, bool) {
+	raw := r.URL.Query().Get("history")
+	if raw == "" {
+		return 0, true
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil || v < 0 {
+		writeError(w, http.StatusBadRequest, "history must be a non-negative integer")
+		return 0, false
+	}
+	return v, true
 }
 
 // GetOllamaModels proxies the Ollama /api/tags endpoint so the frontend avoids CORS issues.

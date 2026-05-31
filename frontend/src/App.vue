@@ -5,7 +5,10 @@ import ServiceWidget  from '@/components/widgets/ServiceWidget.vue'
 import StatusStack    from '@/components/widgets/StatusStack.vue'
 import ActionWidget   from '@/components/widgets/ActionWidget.vue'
 import OllamaWidget   from '@/components/widgets/OllamaWidget.vue'
-import ResourceWidget from '@/components/widgets/ResourceWidget.vue'
+import CPUWidget      from '@/components/widgets/CPUWidget.vue'
+import MemoryWidget   from '@/components/widgets/MemoryWidget.vue'
+import LoadWidget     from '@/components/widgets/LoadWidget.vue'
+import GPUWidget      from '@/components/widgets/GPUWidget.vue'
 import SkeletonCard   from '@/components/ui/SkeletonCard.vue'
 import type { WidgetSize } from '@/types'
 import { useConfig }     from '@/composables/useConfig'
@@ -47,12 +50,44 @@ interface Widget {
 const widgets = computed<Widget[]>(() => {
   const list: Widget[] = []
 
-  if (config.value.systemEnabled) {
+  // System metrics render as individual S tiles, each gated on its own config
+  // flag, so the dashboard only shows the metrics the backend is collecting.
+  if (config.value.system.cpu) {
     list.push({
-      id:        'system',
+      id:        'system:cpu',
       kind:      'resource',
-      size:      'l',
-      component: ResourceWidget,
+      size:      's',
+      component: CPUWidget,
+      props:     {},
+    })
+  }
+
+  if (config.value.system.memory) {
+    list.push({
+      id:        'system:memory',
+      kind:      'resource',
+      size:      's',
+      component: MemoryWidget,
+      props:     {},
+    })
+  }
+
+  if (config.value.system.load) {
+    list.push({
+      id:        'system:load',
+      kind:      'resource',
+      size:      's',
+      component: LoadWidget,
+      props:     {},
+    })
+  }
+
+  if (config.value.system.gpu) {
+    list.push({
+      id:        'system:gpu',
+      kind:      'resource',
+      size:      's',
+      component: GPUWidget,
       props:     {},
     })
   }
@@ -111,6 +146,15 @@ const widgets = computed<Widget[]>(() => {
 
   return list
 })
+
+// Whether any system metric tile is present — drives where loading skeletons sit.
+const systemWidgetIds = computed(() =>
+  widgets.value.filter(w => w.kind === 'resource').map(w => w.id),
+)
+const hasSystemWidgets = computed(() => systemWidgetIds.value.length > 0)
+const lastSystemWidgetId = computed(() =>
+  systemWidgetIds.value[systemWidgetIds.value.length - 1] ?? null,
+)
 
 // ─── Layout (persisted order + size overrides) ───────────────────────────────
 
@@ -186,7 +230,7 @@ function fmtTime(d: Date | null): string {
       <DraggableGrid :items="orderedWidgets" @reorder="setOrder">
 
         <!-- Service skeletons while loading (rendered at top when no system widget precedes) -->
-        <template v-if="loading && !config.systemEnabled" #before>
+        <template v-if="loading && !hasSystemWidgets" #before>
           <SkeletonCard :count="6" />
         </template>
 
@@ -196,7 +240,7 @@ function fmtTime(d: Date | null): string {
 
         <!-- Skeleton bridges system → services while loading -->
         <template #after-item="{ item }">
-          <SkeletonCard v-if="loading && item.kind === 'resource'" :count="6" />
+          <SkeletonCard v-if="loading && item.id === lastSystemWidgetId" :count="6" />
         </template>
 
       </DraggableGrid>

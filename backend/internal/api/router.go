@@ -12,8 +12,8 @@ import (
 )
 
 // NewRouter wires up all API routes and wraps the mux with a CORS handler.
-func NewRouter(worker *checker.Worker, sysMonitor *system.Monitor, cfg *config.Config, s store.Store, actions *semaphore.Manager) http.Handler {
-	h := NewHandler(worker, sysMonitor, cfg, s, actions)
+func NewRouter(worker *checker.Worker, sysSampler *system.Sampler, cfg *config.Config, s store.Store, actions *semaphore.Manager) http.Handler {
+	h := NewHandler(worker, sysSampler, cfg, s, actions)
 
 	mux := http.NewServeMux()
 

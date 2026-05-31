@@ -218,10 +218,27 @@ ollama:
   url: "http://localhost:11434"
 
 # ─── System resources widget ──────────────────────────────────────────────────
-# Displays host CPU usage, RAM, and load averages. Polls every 5 seconds.
+# Displays host CPU usage, RAM, load averages, and (optionally) GPU stats.
+# The backend samples every 5 seconds and keeps a 20-minute history ring.
 # Load average is Linux/macOS only; the widget degrades gracefully on Windows.
+#
+# Each metric is toggled independently:
+#   cpu     CPU utilization % and logical core count.
+#   memory  RAM total / used / free / percent.
+#   load    1/5/15-minute load averages (Linux/macOS).
+#   gpu     GPU utilization, VRAM, and temperature. Requires rocm-smi (AMD) or
+#           nvidia-smi (NVIDIA) on the backend's PATH; degrades to unavailable
+#           when neither is found. Temperature may be null on some AMD cards.
 system:
-  enabled: true
+  cpu:    { enabled: true }
+  memory: { enabled: true }
+  load:   { enabled: true }
+  gpu:    { enabled: true }
+
+# Backward-compatible shorthand: a bare `enabled` toggles ALL four metrics.
+# A present sub-key (cpu/memory/load/gpu) overrides it for that metric.
+#   system:
+#     enabled: true
 
 # ─── Persistent history (optional) ───────────────────────────────────────────
 # Stores health-check results for uptime tracking and historical graphs.

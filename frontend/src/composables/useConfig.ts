@@ -8,6 +8,7 @@ const defaultConfig: DashboardConfig = {
   checkInterval:  30,
   ollamaEnabled:  false,
   systemEnabled:  false,
+  system:         { cpu: false, memory: false, load: false, gpu: false },
   actionsEnabled: false,
   storageEnabled: false,
 }
