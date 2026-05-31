@@ -8,9 +8,7 @@ const CRITICAL_THRESHOLD = 85
 
 const { data: resources, loading, error } = useResources(5_000)
 
-function pct(n: number): string {
-  return n.toFixed(1) + '%'
-}
+const mem = computed(() => resources.value?.memory ?? null)
 
 function barColor(percent: number): string {
   if (percent < WARNING_THRESHOLD)  return 'bg-emerald-400'
@@ -18,54 +16,39 @@ function barColor(percent: number): string {
   return 'bg-red-400'
 }
 
-const ramColor = computed(() => resources.value?.memory ? barColor(resources.value.memory.percent) : 'bg-gray-600')
-const ramWidth = computed(() => `${Math.min(resources.value?.memory?.percent ?? 0, 100)}%`)
+const barClass = computed(() => (mem.value ? barColor(mem.value.percent) : 'bg-gray-600'))
+const barWidth = computed(() => `${Math.min(mem.value?.percent ?? 0, 100)}%`)
+
+// Left value = currently used; right value = total (the max).
+const usedLabel  = computed(() => (mem.value ? fmtBytes(mem.value.used) : '—'))
+const totalLabel = computed(() => (mem.value ? fmtBytes(mem.value.total) : '—'))
 </script>
 
 <template>
-  <article class="widget-card gap-4 p-4">
+  <!-- Tiny (1-slot) tile: RAM | used [thick bar] total. -->
+  <article class="widget-card cursor-default">
+    <div class="flex h-16 items-center gap-3 px-4">
+      <span class="w-10 shrink-0 text-sm font-semibold text-gray-100">RAM</span>
 
-    <!-- Header -->
-    <div class="flex items-center gap-2">
-      <svg class="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-        <rect x="2" y="3" width="20" height="6" rx="1"/>
-        <rect x="2" y="12" width="20" height="6" rx="1"/>
-        <path d="M6 6h.01M6 15h.01"/>
-      </svg>
-      <h2 class="text-sm font-semibold text-gray-100">Memory</h2>
-    </div>
+      <template v-if="error">
+        <span class="flex-1 truncate text-xs text-red-400" :title="error">{{ error }}</span>
+      </template>
 
-    <!-- Loading skeleton -->
-    <template v-if="loading">
-      <div class="space-y-1.5 animate-pulse">
-        <div class="h-3 w-24 rounded bg-gray-800" />
-        <div class="h-1.5 w-full rounded-full bg-gray-800" />
-      </div>
-    </template>
-
-    <!-- Error state -->
-    <p v-else-if="error" class="text-xs text-red-400">{{ error }}</p>
-
-    <!-- Stats -->
-    <div v-else-if="resources?.memory" class="space-y-1.5">
-      <div class="flex items-center justify-between text-xs">
-        <span class="font-medium text-gray-300">Used</span>
-        <span class="tabular-nums text-gray-400">
-          {{ fmtBytes(resources.memory.used) }} / {{ fmtBytes(resources.memory.total) }}
-          &nbsp;({{ pct(resources.memory.percent) }})
+      <template v-else>
+        <span class="w-16 shrink-0 text-right text-xs tabular-nums text-gray-200">
+          {{ usedLabel }}
         </span>
-      </div>
-      <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-800">
-        <div
-          class="h-full rounded-full transition-all duration-700"
-          :class="ramColor"
-          :style="{ width: ramWidth }"
-        />
-      </div>
+        <div class="relative h-2.5 flex-1 overflow-hidden rounded-full bg-gray-800">
+          <div
+            class="h-full rounded-full transition-all duration-700"
+            :class="loading ? 'bg-gray-700 animate-pulse' : barClass"
+            :style="{ width: loading ? '40%' : barWidth }"
+          />
+        </div>
+        <span class="w-16 shrink-0 text-right text-xs tabular-nums text-gray-400">
+          {{ totalLabel }}
+        </span>
+      </template>
     </div>
-
-    <!-- No data -->
-    <p v-else class="text-xs text-gray-500">Memory metrics unavailable</p>
   </article>
 </template>

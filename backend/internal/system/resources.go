@@ -12,8 +12,10 @@ import (
 const (
 	// sampleInterval is how often the background sampler reads host metrics.
 	sampleInterval = 5 * time.Second
-	// ringCapacity is the number of samples retained (240 × 5s = 20 min).
-	ringCapacity = 240
+	// ringCapacity is the number of samples retained (2160 × 5s = 3 h). This
+	// backs the Load widget's longest selectable history window; shorter windows
+	// (20 min / 60 min) just read a suffix of the ring.
+	ringCapacity = 2160
 )
 
 type CPUStats struct {

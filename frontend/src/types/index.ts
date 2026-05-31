@@ -1,8 +1,20 @@
 // ─── Shared enums ────────────────────────────────────────────────────────────
 
 export type ServiceStatus = 'healthy' | 'degraded' | 'unhealthy' | 'unknown'
-export type WidgetSize    = 's' | 'm' | 'l'
 export type ServiceType   = 'http' | 'docker'
+
+// ConfigSize is the per-service/-action sizing knob in the backend YAML config.
+// It maps onto the slot-based WidgetSize used by the grid (s→small, m→large,
+// l→xl) — see SIZE_CLASS in DraggableGrid.vue.
+export type ConfigSize = 's' | 'm' | 'l'
+
+// WidgetSize is the slot-based footprint a widget occupies in the grid. One slot
+// is the footprint of a single tiny tile (a status-only/CPU/GPU/Memory tile):
+//   tiny  = 1 slot   (packed two-per-cell into a TinyStack)
+//   small = 2 slots  (a standard one-column card — service tiles, Load)
+//   large = 4 slots  (two columns — the Ollama widget)
+//   xl    = 6 slots  (full three-column width)
+export type WidgetSize = 'tiny' | 'small' | 'large' | 'xl'
 
 // ─── API response shapes ─────────────────────────────────────────────────────
 
@@ -19,7 +31,7 @@ export interface ServiceStatusData {
   icon?:        string
   category?:    string
   href?:        string
-  size?:        WidgetSize
+  size?:        ConfigSize
   detailDefault?: boolean
   statusOnly?:  boolean
 }
@@ -156,7 +168,7 @@ export interface ActionState {
   templateId:   number
   category?:    string
   icon?:        string
-  size?:        WidgetSize
+  size?:        ConfigSize
   taskId?:      number
   taskStatus:   ActionStatus
   triggeredAt?: string

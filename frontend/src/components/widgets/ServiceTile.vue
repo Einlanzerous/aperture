@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
-import type { ServiceStatusData, WidgetSize } from '@/types'
+import type { ServiceStatusData, ConfigSize } from '@/types'
 import { STATUS_COLORS } from '@/constants/status'
 import { getInitials } from '@/utils/initials'
 import UptimeBar from '@/components/ui/UptimeBar.vue'
@@ -11,7 +11,7 @@ import { useServiceHistory } from '@/composables/useServiceHistory'
 const props = withDefaults(
   defineProps<{
     service: ServiceStatusData
-    size?: WidgetSize
+    size?: ConfigSize
     storageEnabled?: boolean
   }>(),
   { size: 's', storageEnabled: false },

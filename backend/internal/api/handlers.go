@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aperture-dashboard/aperture/internal/checker"
@@ -198,9 +199,83 @@ func (h *Handler) GetOllamaModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Drop hidden models before forwarding. On a successful upstream response we
+	// rewrite the body; if filtering fails to parse (unexpected shape) we fall
+	// back to the raw body so the widget still works.
+	if resp.StatusCode == http.StatusOK && len(h.cfg.Ollama.HiddenModels) > 0 {
+		if filtered, err := filterOllamaModels(body, h.cfg.Ollama.HiddenModels); err == nil {
+			body = filtered
+		} else {
+			slog.Warn("ollama model filter skipped", "component", "api", "error", err)
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.StatusCode)
 	_, _ = w.Write(body)
+}
+
+// filterOllamaModels removes models whose name matches any hidden pattern from an
+// Ollama /api/tags payload ({"models":[{"name":...}, …]}), preserving every other
+// field of the surviving model objects. Returns an error if the body is not the
+// expected shape.
+func filterOllamaModels(body []byte, hidden []string) ([]byte, error) {
+	var payload struct {
+		Models []json.RawMessage `json:"models"`
+	}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, err
+	}
+
+	kept := make([]json.RawMessage, 0, len(payload.Models))
+	for _, raw := range payload.Models {
+		var meta struct {
+			Name string `json:"name"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil {
+			return nil, err
+		}
+		if modelHidden(meta.Name, hidden) {
+			continue
+		}
+		kept = append(kept, raw)
+	}
+
+	return json.Marshal(map[string]any{"models": kept})
+}
+
+// modelHidden reports whether name matches any of the hidden patterns.
+func modelHidden(name string, patterns []string) bool {
+	for _, p := range patterns {
+		if matchGlob(p, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// matchGlob reports whether name matches a simple glob where '*' matches any run
+// of characters (including '/', unlike path.Match). A pattern with no '*' is an
+// exact, case-sensitive match.
+func matchGlob(pattern, name string) bool {
+	if !strings.Contains(pattern, "*") {
+		return pattern == name
+	}
+	parts := strings.Split(pattern, "*")
+	// The leading and trailing segments anchor the ends; interior segments must
+	// appear in order.
+	if !strings.HasPrefix(name, parts[0]) {
+		return false
+	}
+	name = name[len(parts[0]):]
+	for _, seg := range parts[1 : len(parts)-1] {
+		idx := strings.Index(name, seg)
+		if idx < 0 {
+			return false
+		}
+		name = name[idx+len(seg):]
+	}
+	return strings.HasSuffix(name, parts[len(parts)-1])
 }
 
 // GetServiceHistory returns raw recent check records for a single service.

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { ServiceStatusData, WidgetSize } from '@/types'
+import type { ServiceStatusData, ConfigSize } from '@/types'
 import ServiceTile from '@/components/widgets/ServiceTile.vue'
 import StatusTile  from '@/components/widgets/StatusTile.vue'
 
 withDefaults(
   defineProps<{
     service: ServiceStatusData
-    size?: WidgetSize
+    size?: ConfigSize
     storageEnabled?: boolean
   }>(),
   { size: 's', storageEnabled: false },
