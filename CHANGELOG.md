@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.14.0](https://github.com/Einlanzerous/aperture/compare/v1.13.0...v1.14.0) (2026-05-31)
+
+
+### Features
+
+* **frontend:** declutter Load, tighten slots, Ollama 3x4, CPU "16 core" (APTR-47) ([0e39ba7](https://github.com/Einlanzerous/aperture/commit/0e39ba79a6d7a6f46a2fdc6efc821f32776ef7ee))
+* **frontend:** fixed-slot grid polish — compact tiles, decluttered Load, Ollama 2x3 (APTR-47) ([4c03886](https://github.com/Einlanzerous/aperture/commit/4c03886e38a91342ebb06442161b3bc688576e0b))
+* **frontend:** true fixed-slot grid so widgets tile without holes (APTR-47) ([d2192d0](https://github.com/Einlanzerous/aperture/commit/d2192d0b2242c5771c66e4ef6d8ff32c48a9959b))
+* **frontend:** value-in-bar resource tiles + fix drag flicker (APTR-47) ([e9afbe7](https://github.com/Einlanzerous/aperture/commit/e9afbe78d69b9b3189cc3799ffdcaf0856367af2))
+
+
+### Bug Fixes
+
+* **frontend:** Ollama is 2x3, not 3x4 (APTR-47) ([ac504f0](https://github.com/Einlanzerous/aperture/commit/ac504f0c12dbc18b3f48519388487bdde78f3433))
+
 ## [1.13.0](https://github.com/Einlanzerous/aperture/compare/v1.12.0...v1.13.0) (2026-05-31)
 
 
