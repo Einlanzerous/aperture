@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.13.0](https://github.com/Einlanzerous/aperture/compare/v1.12.0...v1.13.0) (2026-05-31)
+
+
+### Features
+
+* enable amd-smi GPU monitoring inside the backend container ([951e4c3](https://github.com/Einlanzerous/aperture/commit/951e4c34a33fdbe5160d58d451e376bd75eb7b5d))
+* slot-based widget sizing, compact stat tiles, Ollama hiding + GPU-in-container (APTR-47) ([0ffa657](https://github.com/Einlanzerous/aperture/commit/0ffa65774580e3a853ea36b69a1cec2260afbaff))
+* slot-based widget sizing, compact stat tiles, Ollama model hiding (APTR-47) ([d4b8992](https://github.com/Einlanzerous/aperture/commit/d4b899295c7cd29dab88040d93478c4cf0a7c1d6))
+
 ## [1.12.0](https://github.com/Einlanzerous/aperture/compare/v1.11.0...v1.12.0) (2026-05-31)
 
 
