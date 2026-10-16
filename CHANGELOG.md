@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.14.1](https://github.com/Einlanzerous/aperture/compare/v1.14.0...v1.14.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **checker:** release the status lock while checks are in flight (APTR-34) ([d9541cd](https://github.com/Einlanzerous/aperture/commit/d9541cd3ce84ece75e3b3285680bb438cb9f0e1a))
+* **checker:** release the status lock while checks are in flight (APTR-34) ([f142202](https://github.com/Einlanzerous/aperture/commit/f142202bdb1770737fb5eacfbc8a0123e715cfca))
+* **deploy:** build on go 1.26 and serve on nginx 1.30, both EOL as they were (SERV-170) ([0c75a89](https://github.com/Einlanzerous/aperture/commit/0c75a898b8126aca51374a2d0b9e1e65e3cde962))
+* **deploy:** build on go 1.26 and serve on nginx 1.30, both EOL as they were (SERV-170) ([2399903](https://github.com/Einlanzerous/aperture/commit/2399903d6cc0960e4d21411ca4b06a85eeda81b9))
+
 ## [1.14.0](https://github.com/Einlanzerous/aperture/compare/v1.13.0...v1.14.0) (2026-05-31)
 
 
