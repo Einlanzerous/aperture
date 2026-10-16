@@ -140,11 +140,16 @@ func (w *Worker) runChecks() {
 		close(results)
 	}()
 
+	// Drain results without holding the lock: the slowest check can take up
+	// to defaultCheckTimeout, and GetStatuses must not stall behind it.
 	collected := make([]*ServiceStatus, 0, len(w.entries))
-	w.mu.Lock()
 	for status := range results {
-		w.statuses[status.Name] = status
 		collected = append(collected, status)
+	}
+
+	w.mu.Lock()
+	for _, status := range collected {
+		w.statuses[status.Name] = status
 	}
 	w.mu.Unlock()
 
